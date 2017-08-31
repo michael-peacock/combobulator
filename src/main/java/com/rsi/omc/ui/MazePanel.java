@@ -26,8 +26,8 @@ public class MazePanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 	private Maze maze;
 	
-	public static final int ROOM_HEIGHT = 30;
-	public static final int ROOM_WIDTH = 30;
+	public static final int ROOM_HEIGHT = 50;
+	public static final int ROOM_WIDTH = 50;
 	public static final int LINE_WIDTH = 5;
 	public static final int TRANSLATE_X = 10;
 	public static final int TRANSLATE_Y = 10;
@@ -38,51 +38,9 @@ public class MazePanel extends JPanel {
         g2d.setStroke(new BasicStroke(LINE_WIDTH));
         g2d.translate(TRANSLATE_X,TRANSLATE_Y);
         
-        renderMaze(g2d);
-        
+        maze.render(g2d);
         
     }
-    
-	private void renderMaze(Graphics2D g2d) {
-		MainScreen mainScreen = (MainScreen) SwingUtilities.getWindowAncestor(this);
-		TextArea textArea = mainScreen.getTextArea();
-
-		int currentX = 0;
-		int currentY = 0;
-		
-		for (Iterator<MazeRow> iterator = maze.getMazeRows().descendingIterator(); iterator.hasNext();) {
-			MazeRow currentRow = (MazeRow) iterator.next();
-
-			for (MazeRoom currentRoom : currentRow.getRooms()) {
-				
-				if (currentRoom.hasNorthWall()) {
-					g2d.drawLine(currentX, currentY, currentX + ROOM_WIDTH, currentY);
-				}
-				if (currentRoom.hasSouthWall()) {
-					g2d.drawLine(currentX, currentY + ROOM_HEIGHT, currentX + ROOM_WIDTH, currentY + ROOM_HEIGHT);
-				}
-				if (currentRoom.hasEastWall()) {
-					g2d.drawLine(currentX + ROOM_WIDTH, currentY, currentX + ROOM_WIDTH, currentY + ROOM_HEIGHT);
-				}
-				if (currentRoom.hasWestWall()) {
-					g2d.drawLine(currentX, currentY, currentX, currentY + ROOM_HEIGHT);
-				}
-				
-				
-				textArea.append("Cell: " + currentRoom + ", ");
-				currentX += ROOM_WIDTH;
-				
-			}
-			textArea.append("\n");
-			currentX = 0;
-			currentY += ROOM_HEIGHT;
-			
-			
-			
-		}
-		
-		//g2d.drawRect(x, y, width, height);
-	}
 
 	@Override
 	protected void paintComponent(Graphics g) {

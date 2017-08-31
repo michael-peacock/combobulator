@@ -1,9 +1,12 @@
 package com.rsi.omc.maze;
 
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.rsi.omc.ui.MazePanel;
 
 import lombok.Data;
 
@@ -87,6 +90,36 @@ public class MazeRoom {
 		}
 		return "";
 	}
+
+	public void render(int xPos, int yPos, Graphics2D g2d) {
+
+		if (hasNorthWall()) {
+			g2d.drawLine(xPos, yPos, xPos + MazePanel.ROOM_WIDTH, yPos);
+		}
+		if (hasSouthWall()) {
+			g2d.drawLine(xPos, yPos + MazePanel.ROOM_HEIGHT, xPos + MazePanel.ROOM_WIDTH, yPos + MazePanel.ROOM_HEIGHT);
+		}
+		if (hasEastWall()) {
+			g2d.drawLine(xPos + MazePanel.ROOM_WIDTH, yPos, xPos + MazePanel.ROOM_WIDTH, yPos + MazePanel.ROOM_HEIGHT);
+		}
+		if (hasWestWall()) {
+			g2d.drawLine(xPos, yPos, xPos, yPos + MazePanel.ROOM_HEIGHT);
+		}
+		
+		if (hasEntrance() || hasExit() || hasKey()) {
+			renderString(getSpecialNotation(),MazePanel.ROOM_WIDTH, xPos, yPos, g2d );
+		}
+		
+				
+		
+	}
+	
+	private void renderString(String s, int width, int XPos, int YPos, Graphics2D g2d){
+        int stringLen = (int)
+            g2d.getFontMetrics().getStringBounds(s, g2d).getWidth();
+        int start = width/2 - stringLen/2;
+        g2d.drawString(s, start + XPos, (YPos + MazePanel.ROOM_HEIGHT)/2);
+ }
 
 	
 

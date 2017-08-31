@@ -1,8 +1,12 @@
 package com.rsi.omc.maze;
 
+import java.awt.Graphics2D;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+
+import com.rsi.omc.ui.MazePanel;
 
 import lombok.Data;
 
@@ -43,6 +47,26 @@ public class Maze {
 				colCount++;
 			}
 		}
+	}
+	
+	// rendering the maze:
+	public void render(Graphics2D g2d)  {
+		
+		int currentX = 0;
+		int currentY = 0;
+		
+		for (Iterator<MazeRow> iterator = getMazeRows().descendingIterator(); iterator.hasNext();) {
+			MazeRow currentRow = (MazeRow) iterator.next();
+
+			for (MazeRoom currentRoom : currentRow.getRooms()) {
+				currentRoom.render(currentX, currentY, g2d);
+				currentX += MazePanel.ROOM_WIDTH;
+			}
+			
+			currentX = 0;
+			currentY += MazePanel.ROOM_HEIGHT;
+		}
+		
 	}
 	
 }
