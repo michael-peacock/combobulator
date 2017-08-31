@@ -8,6 +8,10 @@ import lombok.Data;
 
 @Data
 public class Maze {
+
+	private int rowCount;
+	private int colCount;
+	private int totalRooms;
 	
 	ArrayDeque<MazeRow> mazeRows = new ArrayDeque<>();
 	List<String> rawData = new ArrayList<>();
@@ -30,10 +34,15 @@ public class Maze {
 			if ("ROW".equalsIgnoreCase(entry)) {
 				row = new MazeRow();
 				mazeRows.add(row);
+				rowCount ++;
+				// reset column count on each new row
+				colCount = 0;
 			}
 			else{
 				row.add(new MazeRoom(entry));
+				colCount++;
 			}
 		}
 	}
+	
 }

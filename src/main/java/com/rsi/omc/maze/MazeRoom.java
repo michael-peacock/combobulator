@@ -1,5 +1,10 @@
 package com.rsi.omc.maze;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import lombok.Data;
 
 @Data
@@ -12,6 +17,14 @@ public class MazeRoom {
 	private String specialNotation;
 		
 	private static final String ONE = "1";
+	public static final Map<String,String> DIRECTIONS = new HashMap<>(); 
+	
+	static {
+		DIRECTIONS.put("N", "North");
+		DIRECTIONS.put("S", "South");
+		DIRECTIONS.put("E", "East");
+		DIRECTIONS.put("W", "West");
+	}
 	
 	public void setData(String[] newEntry) {
 			this.northWall = ONE.equals(newEntry[0]);
@@ -48,5 +61,33 @@ public class MazeRoom {
 	public boolean hasWestWall() {
 		return westWall;
 	}
+	
+	public boolean hasKey() {
+		return "K".equalsIgnoreCase(getSpecialNotation());
+	}
+	
+	public boolean hasExit() {
+		return getSpecialNotation().startsWith("X");
+	}
+
+	public boolean hasEntrance() {
+		return getSpecialNotation().startsWith("B");
+	}
+	
+	public String getEntranceDirection() {
+		if (hasEntrance()) {
+			return DIRECTIONS.get( getSpecialNotation().substring(2) );
+		}
+		return "";
+	}
+	
+	public String getExitDirection() {
+		if (hasExit()) {
+			return DIRECTIONS.get( getSpecialNotation().substring(2) );
+		}
+		return "";
+	}
+
+	
 
 }

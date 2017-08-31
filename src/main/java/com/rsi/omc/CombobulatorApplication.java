@@ -1,20 +1,16 @@
 package com.rsi.omc;
 
-import javax.swing.JFrame;
-
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 
 import com.rsi.omc.io.MazeLoader;
+import com.rsi.omc.maze.MazeRenderer;
 import com.rsi.omc.ui.MainScreen;
 
 @SpringBootApplication
-public class CombobulatorApplication extends JFrame {
-	
-
-	private static final long serialVersionUID = 1L;
+public class CombobulatorApplication {
 
 	public static void main(String[] args) {
 		
@@ -29,8 +25,13 @@ public class CombobulatorApplication extends JFrame {
 	
 	@Bean
 	public MazeLoader mazeLoader() {
-		
 		return new MazeLoader();
-		
 	}
+	
+	@Bean
+	public MazeRenderer mazeRenderer() {
+		return new MazeRenderer();
+	}
+
 }
+
