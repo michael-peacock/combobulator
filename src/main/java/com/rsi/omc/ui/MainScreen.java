@@ -5,6 +5,7 @@ import java.awt.HeadlessException;
 import java.awt.TextArea;
 import java.io.File;
 
+import javax.swing.ActionMap;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -29,7 +30,7 @@ public class MainScreen extends JFrame {
 
 	private File mazeFile;
 	
-    private MazePanel mainCanvas;
+    private MazePanel mazePanel;
     private JButton openButton;
     private JButton renderButton;
     private JButton solveButton;
@@ -70,7 +71,8 @@ public class MainScreen extends JFrame {
         mainLabel = new JLabel();
         hSeparator = new JSeparator();
         textArea = new TextArea();
-        mainCanvas = new MazePanel();
+        mazePanel = new MazePanel();
+        mazePanel.setFocusable(false);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -85,9 +87,9 @@ public class MainScreen extends JFrame {
         textArea.setName("mainTextArea"); // NOI18N
         textArea.setPreferredSize(new Dimension(1024, 150));
 
-        mainCanvas.setBackground(new java.awt.Color(255, 255, 255));
-        mainCanvas.setName("mainCanvas"); // NOI18N
-        mainCanvas.setPreferredSize(new Dimension(1024, 650));
+        mazePanel.setBackground(new java.awt.Color(255, 255, 255));
+        mazePanel.setName("mainCanvas"); // NOI18N
+        mazePanel.setPreferredSize(new Dimension(1024, 650));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -109,7 +111,7 @@ public class MainScreen extends JFrame {
                         .addComponent(vSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, true)
-                            .addComponent(mainCanvas, javax.swing.GroupLayout.PREFERRED_SIZE, 1024, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(mazePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 1024, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(textArea, javax.swing.GroupLayout.PREFERRED_SIZE, 1024, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(hSeparator))
                 .addContainerGap())
@@ -137,7 +139,7 @@ public class MainScreen extends JFrame {
                                 .addGap(0, 0, Short.MAX_VALUE))))
                     .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(mainCanvas, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(mazePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(textArea, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(23, 23, 23))))
@@ -223,7 +225,6 @@ public class MainScreen extends JFrame {
     }
 
     private void quitAction(java.awt.event.ActionEvent evt) {   
-    	textArea.append("Bye!\n");
     	dispose();
         System.exit(0);
     }                                        
@@ -246,8 +247,9 @@ public class MainScreen extends JFrame {
     // call the maze renderer
     private void renderMaze(){
     	
-    	mainCanvas.setMaze(mazeLoader.getMaze());
-    	mainCanvas.repaint();
+    	mazePanel.setMaze(mazeLoader.getMaze());
+    	mazePanel.setAction(MazePanel.RENDER);
+    	mazePanel.repaint();
     	
     }
 

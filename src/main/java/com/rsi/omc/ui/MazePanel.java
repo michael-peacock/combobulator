@@ -1,20 +1,12 @@
 package com.rsi.omc.ui;
 
 import java.awt.BasicStroke;
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.TextArea;
-import java.util.Iterator;
 
-import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 import com.rsi.omc.maze.Maze;
-import com.rsi.omc.maze.MazeRoom;
-import com.rsi.omc.maze.MazeRow;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -24,15 +16,22 @@ import lombok.EqualsAndHashCode;
 public class MazePanel extends JPanel {
 	
 	private static final long serialVersionUID = 1L;
+	
 	private Maze maze;
+	private int action;
 	
 	public static final int ROOM_HEIGHT = 75;
 	public static final int ROOM_WIDTH = 75;
 	public static final int LINE_WIDTH = 5;
 	public static final int TRANSLATE_X = 10;
 	public static final int TRANSLATE_Y = 10;
+
+	public static final int RENDER = 1;
+	public static final int SOLVE = 2;	
+
 	
-    private void doDrawing(Graphics g) {
+	
+    private void drawMaze(Graphics g) {
         
         Graphics2D g2d = (Graphics2D) g;
         g2d.setStroke(new BasicStroke(LINE_WIDTH));
@@ -41,13 +40,37 @@ public class MazePanel extends JPanel {
         maze.render(g2d);
         
     }
+    
+    private void solveMaze(Graphics g) {
+        
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setStroke(new BasicStroke(LINE_WIDTH));
+        g2d.translate(TRANSLATE_X,TRANSLATE_Y);
+        
+        maze.solve(g2d);
+        
+    }    
 
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		
 		if (this.maze != null) {
-			doDrawing(g);
+			
+			switch (action) {
+			case RENDER:
+				drawMaze(g);
+				break;
+				
+			case SOLVE:
+				solveMaze(g);
+				break;
+				
+
+			default:
+				break;
+			}
+			
 		}
 	}
 

@@ -1,9 +1,7 @@
 package com.rsi.omc.maze;
 
 import java.awt.Graphics2D;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.rsi.omc.ui.MazePanel;
@@ -17,9 +15,9 @@ public class MazeRoom {
 	private boolean southWall;
 	private boolean eastWall;
 	private boolean westWall;
+	private boolean visited;
 	private String specialNotation;
-	private int row;
-	private int column;
+	private Coordinate location;
 		
 	private static final String ONE = "1";
 	public static final Map<String,String> DIRECTIONS = new HashMap<>(); 
@@ -31,14 +29,16 @@ public class MazeRoom {
 		DIRECTIONS.put("W", "West");
 	}
 	
-	public void setData(String[] newEntry) {
-			this.northWall = ONE.equals(newEntry[0]);
-			this.southWall = ONE.equals(newEntry[1]);
-			this.eastWall = ONE.equals(newEntry[2]);
-			this.westWall = ONE.equals(newEntry[3]);			
-			this.specialNotation = newEntry[4];
-	}
-
+	public static final String NORTH_ENTRANCE = "B-N";
+	public static final String SOUTH_ENTRANCE = "B-S";
+	public static final String EAST_ENTRANCE = "B-E";
+	public static final String WEST_ENTRANCE = "B-W";
+	
+	public static final String NORTH_EXIT = "X-N";
+	public static final String SOUTH_EXIT = "X-S";
+	public static final String EAST_EXIT = "X-E";
+	public static final String WEST_EXIT = "X-W";
+	
 	public MazeRoom(String entry) {
 		
 		StringBuilder sb = new StringBuilder(entry);
@@ -50,6 +50,14 @@ public class MazeRoom {
 		setData(newEntry);
 		
 	}
+
+	public void setData(String[] newEntry) {
+		this.northWall = ONE.equals(newEntry[0]);
+		this.southWall = ONE.equals(newEntry[1]);
+		this.eastWall = ONE.equals(newEntry[2]);
+		this.westWall = ONE.equals(newEntry[3]);			
+		this.specialNotation = newEntry[4];
+	}	
 	
 	public boolean hasNorthWall() {
 		return northWall;
@@ -110,24 +118,16 @@ public class MazeRoom {
 		
 		if (hasEntrance() || hasExit() || hasKey()) {
 			renderString(getSpecialNotation(),MazePanel.ROOM_WIDTH, xPos, yPos, g2d );
-		}
-		else {
-			renderString(xPos + "," + yPos,MazePanel.ROOM_WIDTH, xPos, yPos, g2d );
-		}
-		
+		}		
 				
 		
 	}
 	
-	private void renderString(String s, int width, int XPos, int YPos, Graphics2D g2d){
+	public void renderString(String s, int width, int XPos, int YPos, Graphics2D g2d){
         int stringLen = (int) g2d.getFontMetrics().getStringBounds(s, g2d).getWidth();
         int start = width/2 - stringLen/2;
-        
-        //x += fm.stringWidth(text) + 2;
-        //y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
-        
         g2d.drawString(s, start + XPos, YPos + MazePanel.ROOM_HEIGHT/2);
- }
+	}
 
 
 	
