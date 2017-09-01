@@ -26,8 +26,8 @@ public class MazePanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 	private Maze maze;
 	
-	public static final int ROOM_HEIGHT = 50;
-	public static final int ROOM_WIDTH = 50;
+	public static final int ROOM_HEIGHT = 75;
+	public static final int ROOM_WIDTH = 75;
 	public static final int LINE_WIDTH = 5;
 	public static final int TRANSLATE_X = 10;
 	public static final int TRANSLATE_Y = 10;

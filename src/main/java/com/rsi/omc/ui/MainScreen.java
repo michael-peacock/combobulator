@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rsi.omc.io.MazeLoader;
-import com.rsi.omc.maze.MazeRenderer;
 
 import lombok.Data;
 
@@ -43,10 +42,6 @@ public class MainScreen extends JFrame {
 	@Autowired
 	MazeLoader mazeLoader;
 	
-	@Autowired
-	MazeRenderer mazeRenderer;
-	
-
 	public MainScreen() throws HeadlessException {
 		   try {
 			   for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -88,11 +83,11 @@ public class MainScreen extends JFrame {
         mainLabel.setText("Overlook Maze Combobulator");
 
         textArea.setName("mainTextArea"); // NOI18N
-        textArea.setPreferredSize(new Dimension(750, 100));
+        textArea.setPreferredSize(new Dimension(1024, 150));
 
         mainCanvas.setBackground(new java.awt.Color(255, 255, 255));
         mainCanvas.setName("mainCanvas"); // NOI18N
-        mainCanvas.setPreferredSize(new Dimension(750, 400));
+        mainCanvas.setPreferredSize(new Dimension(1024, 650));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -114,8 +109,8 @@ public class MainScreen extends JFrame {
                         .addComponent(vSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, true)
-                            .addComponent(mainCanvas, javax.swing.GroupLayout.PREFERRED_SIZE, 750, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(textArea, javax.swing.GroupLayout.PREFERRED_SIZE, 750, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(mainCanvas, javax.swing.GroupLayout.PREFERRED_SIZE, 1024, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(textArea, javax.swing.GroupLayout.PREFERRED_SIZE, 1024, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(hSeparator))
                 .addContainerGap())
         );
@@ -229,6 +224,7 @@ public class MainScreen extends JFrame {
 
     private void quitAction(java.awt.event.ActionEvent evt) {   
     	textArea.append("Bye!\n");
+    	dispose();
         System.exit(0);
     }                                        
 
@@ -239,7 +235,11 @@ public class MainScreen extends JFrame {
    		mazeLoader.setMazeFile(mazeFile);
    		textArea.append("Got Maze File: " + mazeFile + "\n");
    		mazeLoader.parseMaze();
-   		textArea.append("Loaded Maze Definition. Maze dimensions : " + mazeLoader.getMaze().getRowCount() + " Rows X " + mazeLoader.getMaze().getColCount() + " Columns\n"  );
+   		textArea.append("Loaded Maze Definition.\n");
+   		textArea.append("Maze dimensions : " + mazeLoader.getMaze().getRowCount() + " Rows X " + mazeLoader.getMaze().getColCount() + " Columns\n");
+   		textArea.append("   Entrance Location : " + mazeLoader.getMaze().getEntrance() + "\n");
+   		textArea.append("   Exit Location : " + mazeLoader.getMaze().getExit() + "\n");
+   		textArea.append("   Key Location : " + mazeLoader.getMaze().getKey() + "\n");
 	}
     
     // =========================================================    
@@ -248,9 +248,6 @@ public class MainScreen extends JFrame {
     	
     	mainCanvas.setMaze(mazeLoader.getMaze());
     	mainCanvas.repaint();
-    	
-    	//mazeRenderer.renderMaze(this);
-    	
     	
     }
 

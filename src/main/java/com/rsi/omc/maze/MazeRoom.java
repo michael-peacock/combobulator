@@ -18,6 +18,8 @@ public class MazeRoom {
 	private boolean eastWall;
 	private boolean westWall;
 	private String specialNotation;
+	private int row;
+	private int column;
 		
 	private static final String ONE = "1";
 	public static final Map<String,String> DIRECTIONS = new HashMap<>(); 
@@ -109,17 +111,24 @@ public class MazeRoom {
 		if (hasEntrance() || hasExit() || hasKey()) {
 			renderString(getSpecialNotation(),MazePanel.ROOM_WIDTH, xPos, yPos, g2d );
 		}
+		else {
+			renderString(xPos + "," + yPos,MazePanel.ROOM_WIDTH, xPos, yPos, g2d );
+		}
 		
 				
 		
 	}
 	
 	private void renderString(String s, int width, int XPos, int YPos, Graphics2D g2d){
-        int stringLen = (int)
-            g2d.getFontMetrics().getStringBounds(s, g2d).getWidth();
+        int stringLen = (int) g2d.getFontMetrics().getStringBounds(s, g2d).getWidth();
         int start = width/2 - stringLen/2;
-        g2d.drawString(s, start + XPos, (YPos + MazePanel.ROOM_HEIGHT)/2);
+        
+        //x += fm.stringWidth(text) + 2;
+        //y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
+        
+        g2d.drawString(s, start + XPos, YPos + MazePanel.ROOM_HEIGHT/2);
  }
+
 
 	
 

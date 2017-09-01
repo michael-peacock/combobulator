@@ -17,6 +17,10 @@ public class Maze {
 	private int colCount;
 	private int totalRooms;
 	
+	private Coordinate entrance;
+	private Coordinate exit;
+	private Coordinate key;
+	
 	ArrayDeque<MazeRow> mazeRows = new ArrayDeque<>();
 	List<String> rawData = new ArrayList<>();
 
@@ -43,10 +47,43 @@ public class Maze {
 				colCount = 0;
 			}
 			else{
-				row.add(new MazeRoom(entry));
+				MazeRoom room = new MazeRoom(entry);
+				row.add(room);
 				colCount++;
 			}
 		}
+		
+		// get important locations
+		int currentX = 0;
+		int currentY = 0;
+		
+		for (Iterator<MazeRow> iterator = getMazeRows().descendingIterator(); iterator.hasNext();) {
+			MazeRow currentRow = (MazeRow) iterator.next();
+
+			for (MazeRoom room : currentRow.getRooms()) {
+
+				if(room.hasEntrance()) {
+					entrance = new Coordinate(currentY,currentX);
+				}
+
+				if(room.hasExit()) {
+					exit = new Coordinate(currentY,currentX);
+				}
+				if(room.hasKey()) {
+					key = new Coordinate(currentY,currentX);
+				}
+				
+				currentX ++;
+			}
+			
+			currentX = 0;
+			currentY ++;
+		}
+		
+		
+		
+		
+		
 	}
 	
 	// rendering the maze:
