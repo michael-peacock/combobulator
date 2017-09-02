@@ -18,6 +18,8 @@ public class MazeRoom {
 	private boolean visited;
 	private String specialNotation;
 	private Coordinate location;
+	private Coordinate screenLocation;
+	
 		
 	private static final String ONE = "1";
 	public static final Map<String,String> DIRECTIONS = new HashMap<>(); 
@@ -101,7 +103,10 @@ public class MazeRoom {
 		return "";
 	}
 
-	public void render(int xPos, int yPos, Graphics2D g2d) {
+	public void render(Graphics2D g2d) {
+		
+		int xPos = screenLocation.getRow();
+		int yPos = screenLocation.getColumn();
 
 		if (hasNorthWall()) {
 			g2d.drawLine(xPos, yPos, xPos + MazePanel.ROOM_WIDTH, yPos);
@@ -117,18 +122,21 @@ public class MazeRoom {
 		}
 		
 		if (hasEntrance() || hasExit() || hasKey()) {
-			renderString(getSpecialNotation(),MazePanel.ROOM_WIDTH, xPos, yPos, g2d );
+			renderString(getSpecialNotation(), g2d );
 		}		
 				
 		
 	}
-	
-	public void renderString(String s, int width, int XPos, int YPos, Graphics2D g2d){
-        int stringLen = (int) g2d.getFontMetrics().getStringBounds(s, g2d).getWidth();
-        int start = width/2 - stringLen/2;
-        g2d.drawString(s, start + XPos, YPos + MazePanel.ROOM_HEIGHT/2);
-	}
 
+	public void renderString(String s, Graphics2D g2d){
+		
+		int xPos = screenLocation.getRow();
+		int yPos = screenLocation.getColumn();
+		
+        int stringLen = (int) g2d.getFontMetrics().getStringBounds(s, g2d).getWidth();
+        int start = MazePanel.ROOM_WIDTH/2 - stringLen/2;
+        g2d.drawString(s, start + xPos, yPos + MazePanel.ROOM_HEIGHT/2);
+	}
 
 	
 
