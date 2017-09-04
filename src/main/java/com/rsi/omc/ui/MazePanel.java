@@ -1,11 +1,17 @@
 package com.rsi.omc.ui;
 
 import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.ActionListener;
+import java.awt.geom.Ellipse2D;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
 import com.rsi.omc.maze.Coordinate;
 import com.rsi.omc.maze.Maze;
@@ -24,7 +30,7 @@ public class MazePanel extends JPanel {
 	private Maze maze;
 	private int action;
 	
-	private boolean foundExit, foundKey; 
+	private boolean foundExit, foundKey, completed, exiting; 
 	
 	public static final int ROOM_HEIGHT = 75;
 	public static final int ROOM_WIDTH = 75;
@@ -33,8 +39,13 @@ public class MazePanel extends JPanel {
 	public static final int TRANSLATE_Y = 10;
 
 	public static final int RENDER = 1;
-	public static final int SOLVE = 2;	
+	public static final int SOLVE = 2;
 
+	private static final double CIRCLE_RADIUS = 10;	
+    Timer timer;
+
+    // list to hold solution 
+    List<MazeRoom> solution = new ArrayList<>();
 	
 	
     private void drawMaze(Graphics g) {
@@ -44,6 +55,7 @@ public class MazePanel extends JPanel {
         g2d.translate(TRANSLATE_X,TRANSLATE_Y);
         
         render(g2d);
+
         
     }
     
@@ -118,24 +130,30 @@ public class MazePanel extends JPanel {
 		
 	}
 
-
 	private void reset() {
 		maze.getRoomMap().forEach((k,v)->v.setVisited(false));
 		foundExit = false;
 		foundKey = false;
+		solution.clear();
 		
 	}
 
 
 	private boolean traverse(Coordinate currentLocation, Graphics2D g2d) {
 		validate();
-		
-		boolean completed = false; 
-		
+
 		MazeRoom room = maze.getRoomMap().get(currentLocation);
+		g2d.setColor(Color.LIGHT_GRAY);
 		
-		room.renderString("x",g2d);
+		solution.add(room);
+		
+		//room.renderString("x",g2d);
+		Ellipse2D.Double circle = new Ellipse2D.Double(room.getScreenLocation().getRow() + (ROOM_WIDTH / 2), room.getScreenLocation().getColumn()+ (ROOM_HEIGHT / 2), CIRCLE_RADIUS, CIRCLE_RADIUS);
+		
+		g2d.fill(circle);
+		 
 		validate();
+		
 		
 		if (room.isVisited()) {
 			return false;
@@ -151,12 +169,7 @@ public class MazePanel extends JPanel {
 			foundExit = true;
 		}
 
-		if (foundKey && foundExit) {
-			completed = true;
-		}
-		else {
-			completed =  traverse(getNextRoom(room), g2d);
-		}
+		completed =  traverse(getNextRoom(room), g2d);
 
 		return completed;
 	}
@@ -170,18 +183,30 @@ public class MazePanel extends JPanel {
 		// north
 		if (canGoNorth(room)) {
 		   nextLocation.setRow(room.getLocation().getRow() - 1);
+		   if (MazeRoom.NORTH_EXIT.equals(room.getSpecialNotation()) &&  foundKey) {
+			   completed = true;
+		   }
 		}
 		// south
 		else if (canGoSouth(room)) {
 		   nextLocation.setRow(room.getLocation().getRow() + 1);
+		   if (MazeRoom.SOUTH_EXIT.equals(room.getSpecialNotation()) &&  foundKey) {
+			   completed = true;
+		   }
 		}
 		// south
 		else if (canGoWest(room)) {
 		   nextLocation.setColumn(room.getLocation().getColumn() - 1);
+		   if (MazeRoom.WEST_EXIT.equals(room.getSpecialNotation()) &&  foundKey) {
+			   completed = true;
+		   }
 		}
 		// south
 		else if (canGoEast(room)) {
 		   nextLocation.setColumn(room.getLocation().getColumn() + 1);
+		   if (MazeRoom.EAST_EXIT.equals(room.getSpecialNotation()) &&  foundKey) {
+			   completed = true;
+		   }
 		}
 
 		
