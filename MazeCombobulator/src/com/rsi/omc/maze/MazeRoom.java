@@ -19,6 +19,7 @@ public class MazeRoom {
 	private Coordinate location;
 	private Coordinate screenLocation;
 	
+        private Map<String, Coordinate> neighbors = new HashMap<>();
 		
 	private static final String ONE = "1";
 	public static final Map<String,String> DIRECTIONS = new HashMap<>(); 
@@ -136,6 +137,26 @@ public class MazeRoom {
         int start = Maze.OFFSET + Maze.ROOM_WIDTH/2 - 1;
         gc.fillText(s, start + xPos, yPos + Maze.OFFSET + Maze.ROOM_HEIGHT/2);
 	}
+
+    public void populateNeighbors() {
+        
+        if (!this.northWall && !getSpecialNotation().contains("N") ){
+            neighbors.put("N", new Coordinate(getLocation().getRow()-1, getLocation().getColumn()) );
+        }
+        if (!this.southWall && !getSpecialNotation().contains("S")) {
+            neighbors.put("S", new Coordinate(getLocation().getRow()+1, getLocation().getColumn()) );
+        }
+
+        if (!this.eastWall && !getSpecialNotation().contains("E")) {
+            neighbors.put("E", new Coordinate(getLocation().getRow(), getLocation().getColumn()+1) );
+        }
+
+        if (!this.westWall && !getSpecialNotation().contains("W")) {
+            neighbors.put("W", new Coordinate(getLocation().getRow(), getLocation().getColumn()-1) );
+        }        
+
+        
+    }
 
 	
 

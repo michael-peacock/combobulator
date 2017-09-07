@@ -99,9 +99,15 @@ public class Maze {
 			currentX = 0;
 			currentY ++;
 		}
+                
+                // populate neighbors;
+                populateNeighbors();
+                
 		
 	}
-	
-
+        
+        public void populateNeighbors() {
+           roomMap.forEach( (k,v)->{v.populateNeighbors();});
+        }
 	
 }
