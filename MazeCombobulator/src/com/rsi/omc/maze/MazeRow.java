@@ -11,9 +11,7 @@ public class MazeRow {
 	List<MazeRoom> rooms = new ArrayList<>();
 	
 	public void add(MazeRoom room) {
-		
 		this.rooms.add(room);
-		
 	}
 	
 	

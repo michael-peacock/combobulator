@@ -17,32 +17,21 @@ public class MazeLoader {
 	private Maze maze;
 
 	public void parseMaze() {
-		if (this.mazeFile != null) {
-			
+            if (this.mazeFile != null) {
 		maze = new Maze();	
-			
 		try (BufferedReader br = new BufferedReader(new FileReader(this.mazeFile))) {
-	    
-			String line = null;
-			
-			while ((line = br.readLine()) != null ) {
-				
-				maze.addRawData(line);
-				
-			}
-			maze.parseRawData();
-			System.out.println(maze.toString());			
-	    } catch (FileNotFoundException e) {
+                    String line = null;
+                    while ((line = br.readLine()) != null ) {
+                        maze.addRawData(line);
+                    }
+                    maze.parseRawData();
+                } 
+                catch (FileNotFoundException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
+		} 
+                catch (IOException e) {
 			e.printStackTrace();
 		}
-			
-			
-		}
-		
+            }
 	}
-	
-	
-
 }
