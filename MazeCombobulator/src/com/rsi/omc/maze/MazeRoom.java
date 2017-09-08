@@ -109,21 +109,24 @@ public class MazeRoom {
 		int yPos = screenLocation.getColumn();
 
 		if (hasNorthWall()) {
-			g2d.strokeLine(Maze.OFFSET + xPos, Maze.OFFSET + yPos, Maze.OFFSET + xPos + Maze.ROOM_WIDTH, Maze.OFFSET + yPos);
+			g2d.strokeLine(xPos, yPos, xPos + Maze.ROOM_WIDTH, yPos);
 		}
 		if (hasSouthWall()) {
-			g2d.strokeLine(Maze.OFFSET + xPos, Maze.OFFSET + yPos + Maze.ROOM_HEIGHT, Maze.OFFSET + xPos + Maze.ROOM_WIDTH, Maze.OFFSET + yPos + Maze.ROOM_HEIGHT);
+			g2d.strokeLine(xPos, yPos + Maze.ROOM_HEIGHT, xPos + Maze.ROOM_WIDTH, yPos + Maze.ROOM_HEIGHT);
 		}
 		if (hasEastWall()) {
-			g2d.strokeLine(Maze.OFFSET + xPos + Maze.ROOM_WIDTH, Maze.OFFSET + yPos, Maze.OFFSET + xPos + Maze.ROOM_WIDTH, Maze.OFFSET + yPos + Maze.ROOM_HEIGHT);
+			g2d.strokeLine(xPos + Maze.ROOM_WIDTH, yPos, xPos + Maze.ROOM_WIDTH, yPos + Maze.ROOM_HEIGHT);
 		}
 		if (hasWestWall()) {
-			g2d.strokeLine(Maze.OFFSET + xPos, Maze.OFFSET + yPos, Maze.OFFSET + xPos, Maze.OFFSET + yPos + Maze.ROOM_HEIGHT);
+			g2d.strokeLine(xPos, yPos,xPos, yPos + Maze.ROOM_HEIGHT);
 		}
 		
 		if (hasEntrance() || hasExit() || hasKey()) {
-			renderString(getSpecialNotation(), g2d );
-		}		
+                    renderString(getSpecialNotation(), g2d );
+		}
+                else {
+                renderString(getLocation().getRow() + "," + getLocation().getColumn(), g2d );
+                }
 				
 		
 	}

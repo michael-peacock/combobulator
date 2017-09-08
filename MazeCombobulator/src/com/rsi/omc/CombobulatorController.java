@@ -19,21 +19,37 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.PathTransition;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Bounds;
 import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.ClosePath;
+import javafx.scene.shape.CubicCurveTo;
+import javafx.scene.shape.LineTo;
+import javafx.scene.shape.MoveTo;
+import javafx.scene.shape.Path;
 import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 /**
  *
@@ -57,30 +73,25 @@ public class CombobulatorController implements Initializable {
     public static final int SOLVE = 2;
 
     private static final double CIRCLE_RADIUS = 10;
+    
+    private GraphicsContext gc;
 
-    // list to hold solution 
-    List<MazeRoom> solution = new ArrayList<>();
+    // list to hold solution screen coordinates
+    List<Coordinate> solution = new ArrayList<>();
 
     private int stepCount;
 
-    @FXML
-    Parent root;
-    @FXML
-    private Label label;
+    @FXML Parent root;
+    @FXML Label label;
 
-    @FXML
-    Button openButton;
-    @FXML
-    Button renderButton;
-    @FXML
-    Button solveButton;
-    @FXML
-    Button quitButton;
+    @FXML Button openButton;
+    @FXML Button renderButton;
+    @FXML Button solveButton;
+    @FXML Button quitButton;
 
-    @FXML
-    TextArea textArea;
-    @FXML
-    Canvas mazePanel;
+    @FXML TextArea textArea;
+    @FXML Canvas mazePanel;
+    @FXML StackPane mazePane;
 
     @FXML
     private void handleOpenAction(ActionEvent event) {
@@ -132,16 +143,28 @@ public class CombobulatorController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // TODO
+        gc = mazePanel.getGraphicsContext2D();
+        gc.setFill(Color.RED);
+        gc.setStroke(Color.BLACK);
+        gc.setLineWidth(3);
+
     }
 
     // rendering the maze:
     public void render() {
-
-        GraphicsContext gc = mazePanel.getGraphicsContext2D();
+        
         gc.clearRect(0, 0, 856.0, 579.0);
         gc.setFill(Color.BLACK);
+        mazePane.getChildren().clear();
+        
+        gc = mazePanel.getGraphicsContext2D();
+        gc.setFill(Color.RED);
+        gc.setStroke(Color.BLACK);
+        gc.setLineWidth(3);
+        mazePane.getChildren().add(mazePanel);
 
+        solution = new ArrayList<Coordinate>();
+        
         int currentX = 0;
         int currentY = 0;
 
@@ -149,7 +172,8 @@ public class CombobulatorController implements Initializable {
             MazeRow currentRow = (MazeRow) iterator.next();
 
             for (MazeRoom currentRoom : currentRow.getRooms()) {
-                currentRoom.setScreenLocation(new Coordinate(currentX, currentY));
+                Coordinate screenLocation = new Coordinate(currentX + Maze.OFFSET, currentY + Maze.OFFSET);
+                currentRoom.setScreenLocation(screenLocation);
                 currentRoom.render(gc);
                 currentX += Maze.ROOM_WIDTH;
             }
@@ -160,9 +184,17 @@ public class CombobulatorController implements Initializable {
     }
 
     // Solve the maze
+    // Here, set step count to 0
+    // start at the start location and find the key
+    // if the key is found, 
+    //      then restart at the key location
+    //      and find the exit
     public void solve() {
-
+        
         stepCount = 0;
+        
+        // reset each room to be not visited
+        maze.getRoomMap().forEach((k, v) -> v.setVisited(false));
         
         Coordinate startLocation = maze.getEntrance();
         Coordinate keyLocation = maze.getKey();
@@ -171,36 +203,62 @@ public class CombobulatorController implements Initializable {
         boolean gotKey = findGoal(startLocation, "KEY", foundKey);
         if (gotKey) {
 
-            // reset each room to be not visited
+            // reset each room to be not visited - again
             maze.getRoomMap().forEach((k, v) -> v.setVisited(false));
             boolean exited = findGoal(keyLocation, "EXIT", foundExit);
+        } 
+        else {
+            textArea.appendText("I got Discombobulated! Never found the key!\n");  
         }
-
+        
+        // try to animate the solution
+        showSolution();
     }
 
+    /**
+     * Method to find the current goal
+     * There are two goal types - Key and Exit
+     * @param currentLocation
+     * @param goalName
+     * @param goalFlag
+     * @return 
+     */
     private boolean findGoal(Coordinate currentLocation, String goalName, boolean goalFlag) {
 
         stepCount++;
-        GraphicsContext gc = mazePanel.getGraphicsContext2D();
+        
         MazeRoom room = maze.getRoomMap().get(currentLocation);
-
-        gc.setFill(Color.BLACK);
-        gc.setStroke(Color.RED);
-
-        if ("KEY".equals(goalName)) {
-            gc.fillOval(
-                    room.getScreenLocation().getRow() + Maze.OFFSET + ROOM_WIDTH / 2,
-                    room.getScreenLocation().getColumn() + Maze.OFFSET + ROOM_WIDTH / 2,
-                    CIRCLE_RADIUS, CIRCLE_RADIUS
-            );
+        if (room.hasKey()) {
+            room.getScreenLocation().setKeyEvent(true);
+            solution.add(room.getScreenLocation());
         }
-        else {
-        gc.strokeOval(
-                room.getScreenLocation().getRow() + Maze.OFFSET + (ROOM_WIDTH /2) -1,
-                room.getScreenLocation().getColumn() + Maze.OFFSET + (ROOM_WIDTH /2)  -1,
-                CIRCLE_RADIUS+2, CIRCLE_RADIUS +2
-            );
+        else if (room.hasExit()) {
+            room.getScreenLocation().setExitEvent(true);
+            solution.add(room.getScreenLocation());
         }
+        else {     
+            solution.add(room.getScreenLocation());
+        }
+        
+        gc.setFill(Color.RED);
+        gc.setStroke(Color.BLACK);
+        
+        textArea.appendText("Current Cell: (Row,Col): (" + currentLocation.getRow() + ","+  currentLocation.getColumn() +")\n");  
+        
+//        if ("KEY".equals(goalName)) {
+//            gc.fillOval(
+//                    room.getScreenLocation().getRow() + Maze.OFFSET + ROOM_WIDTH / 2,
+//                    room.getScreenLocation().getColumn() + Maze.OFFSET + ROOM_WIDTH / 2,
+//                    CIRCLE_RADIUS, CIRCLE_RADIUS
+//            );
+//        }
+//        else {
+//            gc.strokeOval(
+//                room.getScreenLocation().getRow() + Maze.OFFSET + (ROOM_WIDTH /2) -1,
+//                room.getScreenLocation().getColumn() + Maze.OFFSET + (ROOM_WIDTH /2)  -1,
+//                CIRCLE_RADIUS+2, CIRCLE_RADIUS +2
+//            );
+//        }
         if (room.isVisited()) {
             return false;
         }
@@ -209,24 +267,29 @@ public class CombobulatorController implements Initializable {
 
         if ("KEY".equals(goalName)) {
             if (!goalFlag && room.hasKey()) {
-                textArea.appendText("Found Key on step: " + stepCount + "\n");
+                textArea.appendText("Found Key on Step: " + stepCount + "\n");
                 return true;
             }
         }
         else if ("EXIT".equals(goalName)) {
             if (!goalFlag && room.hasExit()) {
-                textArea.appendText("Found Exit on step: " + stepCount + "\n");
+                textArea.appendText("Found Exit on Step: " + stepCount + "\n");
                 return true;
             }
         }
-
+        
+        // get the neighbors of the current room
         Map<String, Coordinate> neighbors = room.getNeighbors();
 
+        // iterate through the neighbors, and check for the goal in each one
+        // is this depth first or breadth first? 
+        // I think it's depth first since I recurse into each neighbor
         for (Map.Entry<String, Coordinate> entry : neighbors.entrySet()) {
             String key = entry.getKey();
-            textArea.appendText("Checking " + MazeRoom.DIRECTIONS.get(key) + "\n");
+            
             MazeRoom nextRoom = maze.getRoomMap().get(entry.getValue());
             if (!nextRoom.isVisited()) {
+                textArea.appendText("Checking " + MazeRoom.DIRECTIONS.get(key) + "\n");
                 goalFlag = findGoal(entry.getValue(), goalName,goalFlag);
             }
             if (goalFlag) {
@@ -236,197 +299,85 @@ public class CombobulatorController implements Initializable {
 
         return false;
     }
-
-    private boolean traverse(Coordinate currentLocation) {
-
-        stepCount++;
-        GraphicsContext gc = mazePanel.getGraphicsContext2D();
-        MazeRoom room = maze.getRoomMap().get(currentLocation);
-
-        solution.add(room);
-
-        gc.setFill(Color.GREEN);
-
-        gc.fillOval(
-                room.getScreenLocation().getRow() + Maze.OFFSET + ROOM_WIDTH / 2,
-                room.getScreenLocation().getColumn() + Maze.OFFSET + ROOM_WIDTH / 2,
-                CIRCLE_RADIUS, CIRCLE_RADIUS
-        );
-
-        if (room.isVisited()) {
-            return false;
-        }
-
-        room.setVisited(true);
-
-        if (!foundKey && room.hasKey()) {
-            textArea.appendText("Found Key on step: " + stepCount + "\n");
-            foundKey = true;
-        }
-
-        if (!foundExit && room.hasExit()) {
-            textArea.appendText("Found Exit on step: " + stepCount + "\n");
-            foundExit = true;
-        }
-        if (foundKey && foundExit) {
-            completed = true;
-        } else {
-            completed = traverse(getNextRoom(room));
-        }
-
-        return completed;
+    
+    // try to animate a shape 
+    // along the solution path 
+    private void showSolution() {
+        
+        Path path = createPath();
+        Animation animation = createPathAnimation(path, Duration.seconds(6));
+        animation.play();
+    
     }
 
-    private Coordinate getNextRoom(MazeRoom room) {
+    private Path createPath() {
 
-        Coordinate nextLocation = new Coordinate(room.getLocation().getRow(), room.getLocation().getColumn());
+        Path path = new Path();
+        Coordinate start = solution.get(0);
+        path.getElements().add(new MoveTo(start.getRow() + Maze.ROOM_WIDTH/2, start.getColumn()+  Maze.ROOM_HEIGHT/2));
+        
+        for (int i = 1; i < solution.size(); i++) {
+            Coordinate location = solution.get(i);
+            path.getElements().add(new LineTo(location.getRow() + Maze.ROOM_WIDTH/2, location.getColumn() + Maze.ROOM_HEIGHT/2));
+        }
+        
+        return path;
+    }    
+    
+private Animation createPathAnimation(Path path, Duration duration) {
 
-        // north
-        if (canGoNorth(room)) {
-            nextLocation.setRow(room.getLocation().getRow() - 1);
-            if (MazeRoom.NORTH_EXIT.equals(room.getSpecialNotation()) && foundKey) {
-                completed = true;
+        // move a node along a path. we want its position
+        Circle pen = new Circle(0, 0, 4);
+        gc.setStroke(Color.BLUE);
+        gc.setLineWidth(4);
+        gc.setFill(Color.BLUE);
+        
+
+        // create path transition
+        PathTransition pathTransition = new PathTransition(duration, path, pen);
+        pathTransition.currentTimeProperty().addListener( new ChangeListener<Duration>() {
+
+        Coordinate oldLocation = null;
+
+            /**
+             * Draw a line from the old location to the new location
+             */
+            @Override
+            public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) {
+
+                // skip starting at 0/0
+                if( oldValue == Duration.ZERO)
+                    return;
+
+                // get current location
+                double x = pen.getTranslateX();
+                double y = pen.getTranslateY();
+
+                // initialize the location
+                if( oldLocation == null) {
+                    oldLocation = new Coordinate(Double.valueOf(x).intValue(),Double.valueOf(x).intValue());
+                    return;
+                }
+
+                // draw Circle
+                // gc.setStroke(Color.GREEN);
+                    gc.fillOval(
+                        x,
+                        y,
+                        CIRCLE_RADIUS, CIRCLE_RADIUS
+                    );
+                
+                //gc.strokeLine(oldLocation.getRow(), oldLocation.getColumn(), x, y);
+
+                // update old location with current one
+                oldLocation.setRow(Double.valueOf(x).intValue());
+                oldLocation.setColumn(Double.valueOf(y).intValue());
             }
-        } // south
-        else if (canGoSouth(room)) {
-            nextLocation.setRow(room.getLocation().getRow() + 1);
-            if (MazeRoom.SOUTH_EXIT.equals(room.getSpecialNotation()) && foundKey) {
-                completed = true;
-            }
-        } // south
-        else if (canGoWest(room)) {
-            nextLocation.setColumn(room.getLocation().getColumn() - 1);
-            if (MazeRoom.WEST_EXIT.equals(room.getSpecialNotation()) && foundKey) {
-                completed = true;
-            }
-        } // south
-        else if (canGoEast(room)) {
-            nextLocation.setColumn(room.getLocation().getColumn() + 1);
-            if (MazeRoom.EAST_EXIT.equals(room.getSpecialNotation()) && foundKey) {
-                completed = true;
-            }
-        }
 
-        return nextLocation;
+        });
 
-    }
-
-    /**
-     * In any room - I can moving a specific direction if there is no wall in
-     * that direction or you're not moving out of an entrance or you're exiting
-     * after finding the key the room has not been visited already
-     *
-     * @param room
-     * @return
-     */
-    private boolean canGoNorth(MazeRoom room) {
-
-        boolean visited = false;
-
-//            if (room.getLocation().getRow() == 0) {
-//                    if (exitingNorth(room));
-//            }
-        if (room.hasNorthWall()) {
-            return false;
-        }
-        if (MazeRoom.NORTH_ENTRANCE.equals(room.getSpecialNotation())) {
-            return false;
-        }
-        if (!foundKey && MazeRoom.NORTH_EXIT.equals(room.getSpecialNotation())) {
-            return false;
-        }
-
-        Coordinate nextLocation = new Coordinate(room.getLocation().getRow() - 1, room.getLocation().getColumn());
-
-        MazeRoom nextRoom = maze.getRoomMap().get(nextLocation);
-        if (nextRoom != null) {
-            return (nextRoom.isVisited()) ? false : true;
-        }
-        return false;
-    }
-
-    private boolean canGoSouth(MazeRoom room) {
-
-        boolean visited = false;
-
-//            if (room.getLocation().getRow() == maze.getRowCount()-1) {
-//                return exitingSouth(room);
-//            }
-        if (room.hasSouthWall()) {
-            return false;
-        }
-        if (room.hasEntrance() && MazeRoom.SOUTH_ENTRANCE.equals(room.getSpecialNotation())) {
-            return false;
-        }
-        Coordinate nextLocation = new Coordinate(room.getLocation().getRow() + 1, room.getLocation().getColumn());
-
-        MazeRoom nextRoom = maze.getRoomMap().get(nextLocation);
-        if (nextRoom != null) {
-            return (nextRoom.isVisited()) ? false : true;
-        }
-        return false;
-
-    }
-
-    private boolean canGoEast(MazeRoom room) {
-
-        boolean visited = false;
-
-//            if (room.getLocation().getColumn() == maze.getColCount()-1) {
-//                    return exitingEast(room);
-//            }
-        if (room.hasEastWall()) {
-            return false;
-        }
-        if (room.hasEntrance() && MazeRoom.EAST_ENTRANCE.equals(room.getSpecialNotation())) {
-            return false;
-        }
-        Coordinate nextLocation = new Coordinate(room.getLocation().getRow(), room.getLocation().getColumn() + 1);
-
-        MazeRoom nextRoom = maze.getRoomMap().get(nextLocation);
-        if (nextRoom != null) {
-            return (nextRoom.isVisited()) ? false : true;
-        }
-        return false;
-
-    }
-
-    private boolean canGoWest(MazeRoom room) {
-
-        boolean visited = false;
-
-//            if (room.getLocation().getColumn() == 0) {
-//                return exitingWest(room);
-//            }
-        if (room.hasWestWall()) {
-            return false;
-        }
-        if (room.hasEntrance() && MazeRoom.WEST_ENTRANCE.equals(room.getSpecialNotation())) {
-            return false;
-        }
-        Coordinate nextLocation = new Coordinate(room.getLocation().getRow(), room.getLocation().getColumn() - 1);
-
-        MazeRoom nextRoom = maze.getRoomMap().get(nextLocation);
-        if (nextRoom != null) {
-            return (nextRoom.isVisited()) ? false : true;
-        }
-        return false;
-    }
-
-    private boolean exitingNorth(MazeRoom room) {
-        return room.hasExit() && MazeRoom.NORTH_EXIT.equals(room.getSpecialNotation()) && foundKey;
-    }
-
-    private boolean exitingSouth(MazeRoom room) {
-        return room.hasExit() && MazeRoom.SOUTH_EXIT.equals(room.getSpecialNotation()) && foundKey;
-    }
-
-    private boolean exitingEast(MazeRoom room) {
-        return room.hasExit() && MazeRoom.EAST_EXIT.equals(room.getSpecialNotation()) && foundKey;
-    }
-
-    private boolean exitingWest(MazeRoom room) {
-        return room.hasExit() && MazeRoom.WEST_EXIT.equals(room.getSpecialNotation()) && foundKey;
-    }
-
+        return pathTransition;
+    }    
+  
+    
 }

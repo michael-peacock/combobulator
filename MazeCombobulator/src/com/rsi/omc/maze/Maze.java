@@ -22,6 +22,8 @@ public class Maze {
 	private Coordinate key;
 	
 	private Map<Coordinate, MazeRoom> roomMap = new HashMap<>();
+	private Map<Coordinate, MazeRoom> screenLocationMap = new HashMap<>();
+        
 	
 	ArrayDeque<MazeRow> mazeRows = new ArrayDeque<>();
 	List<String> rawData = new ArrayList<>();
