@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
@@ -10,7 +15,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane id="AnchorPane" fx:id="root" prefHeight="800.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rsi.omc.CombobulatorController">
+<AnchorPane id="AnchorPane" fx:id="root" prefHeight="800.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rsi.omc.CombobulatorController">
     <children>
         <Button id="openButton" fx:id="openButton" layoutX="15.0" layoutY="93.0" onAction="#handleOpenAction" text="Open Maze File" />
       <Separator layoutX="-6.0" layoutY="63.0" prefHeight="3.0" prefWidth="1030.0" />
@@ -21,15 +26,15 @@
          </font>
       </Label>
       <Button id="renderButton" fx:id="renderButton" layoutX="15.0" layoutY="148.0" mnemonicParsing="false" onAction="#handleRenderAction" prefHeight="25.0" prefWidth="99.0" text="Render Maze" textAlignment="CENTER" />
-      <Button id="solveButton" fx:id="solveButton" layoutX="15.0" layoutY="200.0" mnemonicParsing="false" onAction="#handleSolveAction" prefHeight="25.0" prefWidth="99.0" text="Solve Maze" />
+      <Button id="solveButton" fx:id="graphButton" layoutX="15.0" layoutY="200.0" mnemonicParsing="false" onAction="#handleMazeGraphAction" prefHeight="25.0" prefWidth="99.0" text="Maze Graph" />
       <Button fx:id="quitButton" layoutX="15.0" layoutY="739.0" mnemonicParsing="false" onAction="#handleQuitAction" prefHeight="25.0" prefWidth="99.0" text="Quit" />
       <SplitPane dividerPositions="0.8107734806629834" layoutX="141.0" layoutY="68.0" orientation="VERTICAL" prefHeight="726.0" prefWidth="878.0">
         <items>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                <children>
-                  <StackPane fx:id="mazePane"  style="-fx-background-color: #FFFFFF;">
+                  <StackPane fx:id="mazePane" style="-fx-background-color: #FFFFFF;">
                      <children>
-                        <Canvas fx:id="mazePanel" height="579.0" width="856.0" />
+                        <Canvas fx:id="mazePanel" height="579.0" width="870.0" />
                      </children>
                   </StackPane>
                </children>
@@ -41,5 +46,6 @@
             </AnchorPane>
         </items>
       </SplitPane>
+      <Button id="solveButton" fx:id="solveButton" layoutX="14.0" layoutY="250.0" mnemonicParsing="false" onAction="#handleSolveAction" prefHeight="25.0" prefWidth="99.0" text="Solve Maze" />
     </children>
 </AnchorPane>

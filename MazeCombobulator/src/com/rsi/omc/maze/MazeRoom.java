@@ -4,6 +4,8 @@ import java.awt.Graphics2D;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 
 import lombok.Data;
 
@@ -53,6 +55,21 @@ public class MazeRoom {
 		
 	}
 
+        public String getId() {
+            StringBuilder sb = new StringBuilder();
+            if (isSpecialRoom()) {
+                sb.append(getSpecialNotation() + "\n");
+            }
+            sb.append("(");
+            sb.append(getLocation().getRow());
+            sb.append(",");
+            sb.append(getLocation().getColumn());
+            sb.append(")");
+            
+            return sb.toString();
+        
+        }
+        
 	public void setData(String[] newEntry) {
 		this.northWall = ONE.equals(newEntry[0]);
 		this.southWall = ONE.equals(newEntry[1]);
@@ -102,7 +119,11 @@ public class MazeRoom {
 		}
 		return "";
 	}
-
+        
+        public boolean isSpecialRoom() {
+            return hasKey() || hasEntrance() || hasExit();
+        }
+        
 	public void render(GraphicsContext g2d) {
 		
 		int xPos = screenLocation.getRow();
@@ -124,21 +145,26 @@ public class MazeRoom {
 		if (hasEntrance() || hasExit() || hasKey()) {
                     renderString(getSpecialNotation(), g2d );
 		}
-                else {
-                renderString(getLocation().getRow() + "," + getLocation().getColumn(), g2d );
-                }
-				
-		
+	
 	}
 
 	public void renderString(String s, GraphicsContext gc){
 		
-	int xPos = screenLocation.getRow();
-	int yPos = screenLocation.getColumn();
-		
-        //int stringLen = (int) gc.getFont().  getFontMetrics().getStringBounds(s, gc).getWidth();
-        int start = Maze.OFFSET + Maze.ROOM_WIDTH/2 - 1;
-        gc.fillText(s, start + xPos, yPos + Maze.OFFSET + Maze.ROOM_HEIGHT/2);
+            int xPos = screenLocation.getRow();
+            int yPos = screenLocation.getColumn();
+            Paint currentStroke = gc.getStroke();
+            Paint currentFill = gc.getStroke();
+            double currentWidth = gc.getLineWidth();
+            gc.setStroke(Color.WHITE);
+            gc.setFill(Color.BLACK);
+            gc.setLineWidth(1.25);
+
+            gc.fillOval(xPos, yPos,Maze.ROOM_WIDTH, Maze.ROOM_WIDTH);
+            gc.strokeText(s,  xPos + Maze.ROOM_WIDTH/2 - 7, yPos + Maze.ROOM_HEIGHT/2);
+
+            gc.setStroke(currentStroke);
+            gc.setFill(currentFill);
+            gc.setLineWidth(currentWidth);
 	}
 
     public void populateNeighbors() {

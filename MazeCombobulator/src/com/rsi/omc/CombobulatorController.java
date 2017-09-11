@@ -5,6 +5,10 @@
  */
 package com.rsi.omc;
 
+import com.rsi.omc.graph.Graph;
+import com.rsi.omc.graph.Layout;
+import com.rsi.omc.graph.MazeLayout;
+import com.rsi.omc.graph.RandomLayout;
 import com.rsi.omc.io.MazeLoader;
 import com.rsi.omc.maze.Coordinate;
 import com.rsi.omc.maze.MazeRoom;
@@ -23,6 +27,9 @@ import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.PathTransition;
+import javafx.animation.SequentialTransition;
+import javafx.animation.StrokeTransition;
+import javafx.animation.StrokeTransitionBuilder;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -40,16 +47,21 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.ClosePath;
 import javafx.scene.shape.CubicCurveTo;
 import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextBoundsType;
 import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import static javafx.util.Duration.INDEFINITE;
 
 /**
  *
@@ -72,12 +84,13 @@ public class CombobulatorController implements Initializable {
     public static final int RENDER = 1;
     public static final int SOLVE = 2;
 
-    private static final double CIRCLE_RADIUS = 10;
+    public static final double CIRCLE_RADIUS = 10;
     
     private GraphicsContext gc;
 
-    // list to hold solution screen coordinates
-    List<Coordinate> solution = new ArrayList<>();
+    // list to hold keySolution screen coordinates
+    List<Coordinate> keySolution = new ArrayList<>();
+    List<Coordinate> exitSolution = new ArrayList<>();
 
     private int stepCount;
 
@@ -88,10 +101,13 @@ public class CombobulatorController implements Initializable {
     @FXML Button renderButton;
     @FXML Button solveButton;
     @FXML Button quitButton;
+    @FXML Button graphButton;
 
     @FXML TextArea textArea;
     @FXML Canvas mazePanel;
     @FXML StackPane mazePane;
+    public static final Paint START_COLOR = Color.CORNFLOWERBLUE;
+    public static final Paint KEY_COLOR = Color.LIGHTGREEN;
 
     @FXML
     private void handleOpenAction(ActionEvent event) {
@@ -140,6 +156,12 @@ public class CombobulatorController implements Initializable {
     private void handleQuitAction(ActionEvent event) {
         Platform.exit();
     }
+    
+    @FXML
+    private void handleMazeGraphAction(ActionEvent event) {
+        textArea.appendText("Rendering Maze Graph ...\n");
+        renderMazeGraph();
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -157,13 +179,16 @@ public class CombobulatorController implements Initializable {
         gc.setFill(Color.BLACK);
         mazePane.getChildren().clear();
         
+        
+        
         gc = mazePanel.getGraphicsContext2D();
         gc.setFill(Color.RED);
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(3);
         mazePane.getChildren().add(mazePanel);
 
-        solution = new ArrayList<Coordinate>();
+        keySolution = new ArrayList<Coordinate>();
+        exitSolution = new ArrayList<Coordinate>();
         
         int currentX = 0;
         int currentY = 0;
@@ -211,7 +236,7 @@ public class CombobulatorController implements Initializable {
             textArea.appendText("I got Discombobulated! Never found the key!\n");  
         }
         
-        // try to animate the solution
+        // try to animate the keySolution
         showSolution();
     }
 
@@ -228,37 +253,11 @@ public class CombobulatorController implements Initializable {
         stepCount++;
         
         MazeRoom room = maze.getRoomMap().get(currentLocation);
-        if (room.hasKey()) {
-            room.getScreenLocation().setKeyEvent(true);
-            solution.add(room.getScreenLocation());
-        }
-        else if (room.hasExit()) {
-            room.getScreenLocation().setExitEvent(true);
-            solution.add(room.getScreenLocation());
-        }
-        else {     
-            solution.add(room.getScreenLocation());
-        }
-        
         gc.setFill(Color.RED);
         gc.setStroke(Color.BLACK);
         
-        textArea.appendText("Current Cell: (Row,Col): (" + currentLocation.getRow() + ","+  currentLocation.getColumn() +")\n");  
-        
-//        if ("KEY".equals(goalName)) {
-//            gc.fillOval(
-//                    room.getScreenLocation().getRow() + Maze.OFFSET + ROOM_WIDTH / 2,
-//                    room.getScreenLocation().getColumn() + Maze.OFFSET + ROOM_WIDTH / 2,
-//                    CIRCLE_RADIUS, CIRCLE_RADIUS
-//            );
-//        }
-//        else {
-//            gc.strokeOval(
-//                room.getScreenLocation().getRow() + Maze.OFFSET + (ROOM_WIDTH /2) -1,
-//                room.getScreenLocation().getColumn() + Maze.OFFSET + (ROOM_WIDTH /2)  -1,
-//                CIRCLE_RADIUS+2, CIRCLE_RADIUS +2
-//            );
-//        }
+        //textArea.appendText("Current Cell: (Row,Col): (" + currentLocation.getRow() + ","+  currentLocation.getColumn() +")\n");  
+
         if (room.isVisited()) {
             return false;
         }
@@ -266,12 +265,14 @@ public class CombobulatorController implements Initializable {
         room.setVisited(true);
 
         if ("KEY".equals(goalName)) {
+            keySolution.add(room.getScreenLocation());
             if (!goalFlag && room.hasKey()) {
                 textArea.appendText("Found Key on Step: " + stepCount + "\n");
                 return true;
             }
         }
         else if ("EXIT".equals(goalName)) {
+            exitSolution.add(room.getScreenLocation());
             if (!goalFlag && room.hasExit()) {
                 textArea.appendText("Found Exit on Step: " + stepCount + "\n");
                 return true;
@@ -289,95 +290,65 @@ public class CombobulatorController implements Initializable {
             
             MazeRoom nextRoom = maze.getRoomMap().get(entry.getValue());
             if (!nextRoom.isVisited()) {
-                textArea.appendText("Checking " + MazeRoom.DIRECTIONS.get(key) + "\n");
+                //textArea.appendText("Checking " + MazeRoom.DIRECTIONS.get(key) + "\n");
                 goalFlag = findGoal(entry.getValue(), goalName,goalFlag);
             }
             if (goalFlag) {
                 return true;
             }
         }
-
         return false;
     }
     
     // try to animate a shape 
-    // along the solution path 
+    // along the keySolution path 
     private void showSolution() {
-        
-        Path path = createPath();
-        Animation animation = createPathAnimation(path, Duration.seconds(6));
-        animation.play();
-    
-    }
 
-    private Path createPath() {
-
-        Path path = new Path();
-        Coordinate start = solution.get(0);
-        path.getElements().add(new MoveTo(start.getRow() + Maze.ROOM_WIDTH/2, start.getColumn()+  Maze.ROOM_HEIGHT/2));
+        SolutionView view = new SolutionView();
+        view.setGc(gc);
         
-        for (int i = 1; i < solution.size(); i++) {
-            Coordinate location = solution.get(i);
-            path.getElements().add(new LineTo(location.getRow() + Maze.ROOM_WIDTH/2, location.getColumn() + Maze.ROOM_HEIGHT/2));
-        }
+        Path keyPath = view.createPath(keySolution);
+        Path exitPath = view.createPath(exitSolution);
         
-        return path;
-    }    
-    
-private Animation createPathAnimation(Path path, Duration duration) {
-
-        // move a node along a path. we want its position
-        Circle pen = new Circle(0, 0, 4);
-        gc.setStroke(Color.BLUE);
+        
+        Animation keyAnimation = view.createPathAnimation(keyPath, Duration.seconds(4),"KEY");
+        Animation exitAnimation = view.createPathAnimation(exitPath, Duration.seconds(4),"EXIT");
+        
+        Animation startMarker = view.addMarker(maze.getEntrance(), Color.BLACK, Color.CORNFLOWERBLUE);
+        Animation keyMarker = view.addMarker(maze.getKey(), Color.CORNFLOWERBLUE, Color.LIGHTGREEN);
+        Animation exitMarker = view.addMarker(maze.getExit(), Color.LIGHTGREEN, Color.DARKBLUE);
+        
         gc.setLineWidth(4);
-        gc.setFill(Color.BLUE);
+
+        SequentialTransition animationSeq = new SequentialTransition(
+                    startMarker, 
+                    keyAnimation,keyMarker,
+                    exitAnimation,exitMarker);
+        animationSeq.setAutoReverse(true);
+        animationSeq.play();
+    }
+    
+ 
+
+    private void renderMazeGraph() {
+        // clear the graphics area 
+        gc.clearRect(0, 0, 856.0, 579.0);
+        gc.setFill(Color.BLACK);
+        mazePane.getChildren().clear();
+ 
+        Graph graph = new Graph(mazeLoader.getMaze());
         
-
-        // create path transition
-        PathTransition pathTransition = new PathTransition(duration, path, pen);
-        pathTransition.currentTimeProperty().addListener( new ChangeListener<Duration>() {
-
-        Coordinate oldLocation = null;
-
-            /**
-             * Draw a line from the old location to the new location
-             */
-            @Override
-            public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) {
-
-                // skip starting at 0/0
-                if( oldValue == Duration.ZERO)
-                    return;
-
-                // get current location
-                double x = pen.getTranslateX();
-                double y = pen.getTranslateY();
-
-                // initialize the location
-                if( oldLocation == null) {
-                    oldLocation = new Coordinate(Double.valueOf(x).intValue(),Double.valueOf(x).intValue());
-                    return;
-                }
-
-                // draw Circle
-                // gc.setStroke(Color.GREEN);
-                    gc.fillOval(
-                        x,
-                        y,
-                        CIRCLE_RADIUS, CIRCLE_RADIUS
-                    );
-                
-                //gc.strokeLine(oldLocation.getRow(), oldLocation.getColumn(), x, y);
-
-                // update old location with current one
-                oldLocation.setRow(Double.valueOf(x).intValue());
-                oldLocation.setColumn(Double.valueOf(y).intValue());
-            }
-
-        });
-
-        return pathTransition;
-    }    
+        graph.addComponents();
+        
+        Layout layout = new MazeLayout(graph);
+        layout.execute();
+        
+ 
+        mazePane.getChildren().add(graph.getScrollPane());
+        
+        // iterate through all 
+    }
   
+    
     
 }
