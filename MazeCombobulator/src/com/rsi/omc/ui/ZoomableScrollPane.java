@@ -1,5 +1,5 @@
 
-package com.rsi.omc.graph;
+package com.rsi.omc.ui;
 
 import javafx.event.EventHandler;
 import javafx.scene.Group;
@@ -15,7 +15,11 @@ public class ZoomableScrollPane extends ScrollPane {
     double scaleValue = 1.0;
     double delta = 0.1;
 
+    public ZoomableScrollPane() {
+        super();
+    }
     public ZoomableScrollPane(Node content) {
+        this();
         this.content = content;
         Group contentGroup = new Group();
         zoomGroup = new Group();

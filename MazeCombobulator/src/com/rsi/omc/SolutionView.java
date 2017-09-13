@@ -67,7 +67,7 @@ public class SolutionView {
     public Animation createPathAnimation(Path path, Duration duration, String goal) {
 
         // move a node along a path. we want its position
-        Circle pen = new Circle(0, 0, 2);
+        Circle pen = new Circle(0, 0, 8);
 
         // create path transition
         PathTransition pathTransition = new PathTransition(duration, path, pen);
@@ -104,11 +104,13 @@ public class SolutionView {
                     gc.setFill(START_COLOR);
                     gc.setStroke(START_COLOR);
                 }
-                gc.fillOval(
-                    x,
-                    y,
-                    CIRCLE_RADIUS, CIRCLE_RADIUS
-                );
+               gc.strokeLine(Double.valueOf(oldLocation.getRow()), Double.valueOf(oldLocation.getColumn()), x, y);
+
+//                gc.fillOval(
+//                    x,
+//                    y,
+//                    CIRCLE_RADIUS, CIRCLE_RADIUS
+//                );
                 
                 // update old location with current one
                 oldLocation.setRow(Double.valueOf(x).intValue());

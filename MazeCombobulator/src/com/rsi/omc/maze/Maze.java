@@ -30,17 +30,17 @@ public class Maze {
 
         	private boolean foundExit, foundKey, completed, exiting; 
 	
-        public static final int OFFSET = 10;
-	public static final int ROOM_HEIGHT = 45;
-	public static final int ROOM_WIDTH = 45;
-	public static final int LINE_WIDTH = 5;
-	public static final int TRANSLATE_X = 10;
-	public static final int TRANSLATE_Y = 10;
+        public static final int OFFSET = 3;
+	public static final int ROOM_HEIGHT = 25;
+	public static final int ROOM_WIDTH = 25;
+	public static final int LINE_WIDTH = 1;
+	public static final int TRANSLATE_X = 5;
+	public static final int TRANSLATE_Y = 5;
 
 	public static final int RENDER = 1;
 	public static final int SOLVE = 2;
 
-	private static final double CIRCLE_RADIUS = 10;	
+	private static final double CIRCLE_RADIUS = 5;	
         
 	
 	public void addRow(MazeRow row) {

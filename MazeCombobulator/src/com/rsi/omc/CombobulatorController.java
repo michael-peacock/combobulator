@@ -8,12 +8,13 @@ package com.rsi.omc;
 import com.rsi.omc.graph.Graph;
 import com.rsi.omc.graph.Layout;
 import com.rsi.omc.graph.MazeLayout;
-import com.rsi.omc.graph.RandomLayout;
+import com.rsi.omc.ui.ZoomableScrollPane;
 import com.rsi.omc.io.MazeLoader;
 import com.rsi.omc.maze.Coordinate;
 import com.rsi.omc.maze.MazeRoom;
 import com.rsi.omc.maze.MazeRow;
 import com.rsi.omc.maze.Maze;
+import com.rsi.omc.ui.ResizableCanvas;
 
 import java.awt.Desktop;
 import java.io.File;
@@ -24,44 +25,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import javafx.animation.Animation;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.PathTransition;
 import javafx.animation.SequentialTransition;
-import javafx.animation.StrokeTransition;
-import javafx.animation.StrokeTransitionBuilder;
-import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Bounds;
 import javafx.scene.Parent;
-import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.ClosePath;
-import javafx.scene.shape.CubicCurveTo;
-import javafx.scene.shape.LineTo;
-import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextBoundsType;
-import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import static javafx.util.Duration.INDEFINITE;
 
 /**
  *
@@ -75,16 +58,17 @@ public class CombobulatorController implements Initializable {
     private MazeLoader mazeLoader;
 
     private boolean foundExit, foundKey, completed, exiting;
-    public static final int ROOM_HEIGHT = 45;
-    public static final int ROOM_WIDTH = 45;
-    public static final int LINE_WIDTH = 5;
-    public static final int TRANSLATE_X = 10;
-    public static final int TRANSLATE_Y = 10;
+
+    public static final double CANVAS_HEIGHT = 16000.0;
+    public static final double CANVAS_WIDTH = 16000.0;
+    public static final int LINE_WIDTH = 1;
+    public static final int TRANSLATE_X = 2;
+    public static final int TRANSLATE_Y = 2;
 
     public static final int RENDER = 1;
     public static final int SOLVE = 2;
 
-    public static final double CIRCLE_RADIUS = 10;
+    public static final double CIRCLE_RADIUS = 5;
     
     private GraphicsContext gc;
 
@@ -102,12 +86,15 @@ public class CombobulatorController implements Initializable {
     @FXML Button solveButton;
     @FXML Button quitButton;
     @FXML Button graphButton;
+    @FXML TextField animationDuration;
 
     @FXML TextArea textArea;
-    @FXML Canvas mazePanel;
+    ResizableCanvas mazePanel;
+    ZoomableScrollPane zoomPane;
     @FXML StackPane mazePane;
     public static final Paint START_COLOR = Color.CORNFLOWERBLUE;
-    public static final Paint KEY_COLOR = Color.LIGHTGREEN;
+    public static final Paint KEY_COLOR = Color.DARKRED;
+    private double animDuration = 10.0;
 
     @FXML
     private void handleOpenAction(ActionEvent event) {
@@ -123,21 +110,6 @@ public class CombobulatorController implements Initializable {
         } else {
             textArea.appendText("No Maze File Selected\n");
         }
-
-    }
-
-    private void readFile(File mazeFile) {
-
-        mazeLoader = new MazeLoader();
-        mazeLoader.setMazeFile(mazeFile);
-        textArea.appendText("Got Maze File: " + mazeFile + "\n");
-        mazeLoader.parseMaze();
-        textArea.appendText("Loaded Maze Definition.\n");
-        textArea.appendText("Maze dimensions : " + mazeLoader.getMaze().getRowCount() + " Rows X " + mazeLoader.getMaze().getColCount() + " Columns\n");
-        textArea.appendText("   Entrance Location : " + mazeLoader.getMaze().getEntrance() + "\n");
-        textArea.appendText("   Exit Location : " + mazeLoader.getMaze().getExit() + "\n");
-        textArea.appendText("   Key Location : " + mazeLoader.getMaze().getKey() + "\n");
-        this.maze = mazeLoader.getMaze();
     }
 
     @FXML
@@ -162,37 +134,98 @@ public class CombobulatorController implements Initializable {
         textArea.appendText("Rendering Maze Graph ...\n");
         renderMazeGraph();
     }
-
+    @FXML
+    private void handleMazeDurationTextChange(ActionEvent event) {
+        this.animDuration = Double.parseDouble(animationDuration.getText());
+        textArea.appendText("Animation Duration Changed to " + animDuration + " seconds\n");
+        
+    }
+    
+    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        mazePanel = getNewCanvas(CANVAS_HEIGHT, CANVAS_WIDTH);
+        zoomPane = new ZoomableScrollPane(mazePanel);
+        mazePane.getChildren().add(zoomPane);
+        
         gc = mazePanel.getGraphicsContext2D();
         gc.setFill(Color.RED);
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(3);
-
+        
+        animationDuration.focusedProperty().addListener(new ChangeListener<Boolean>()
+        {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> arg0, Boolean oldPropertyValue, Boolean newPropertyValue)
+            {
+                if (newPropertyValue)
+                {
+                    animDuration = Double.parseDouble(animationDuration.getText());
+                    textArea.appendText("Animation Duration Changed to " + animDuration + " seconds\n");
+                }
+            }
+        });
+        
     }
 
-    // rendering the maze:
-    public void render() {
+    private ResizableCanvas getNewCanvas(double height, double width) {
+       ResizableCanvas myPanel = new ResizableCanvas(width, height);
+
+        myPanel.widthProperty().bind(
+                       mazePane.widthProperty());
+        myPanel.heightProperty().bind(
+                       mazePane.heightProperty());
+        return myPanel;
+    }
+    private void readFile(File mazeFile) {
+
+        mazeLoader = new MazeLoader();
+        mazeLoader.setMazeFile(mazeFile);
+        textArea.appendText("Got Maze File: " + mazeFile + "\n");
+        mazeLoader.parseMaze();
+        textArea.appendText("Loaded Maze Definition.\n");
+        textArea.appendText("Maze dimensions : " + mazeLoader.getMaze().getRowCount() + " Rows X " + mazeLoader.getMaze().getColCount() + " Columns\n");
+        textArea.appendText("   Entrance Location : " + mazeLoader.getMaze().getEntrance() + "\n");
+        textArea.appendText("   Exit Location : " + mazeLoader.getMaze().getExit() + "\n");
+        textArea.appendText("   Key Location : " + mazeLoader.getMaze().getKey() + "\n");
+        this.maze = mazeLoader.getMaze();
         
-        gc.clearRect(0, 0, 856.0, 579.0);
+        mazePanel = getNewCanvas(CANVAS_HEIGHT, CANVAS_WIDTH);
+ 
+        
+        zoomPane = new ZoomableScrollPane(mazePanel);
+        
+        mazePane.getChildren().add(zoomPane);
+        
+    }
+
+
+    public void clearCanvas() {
+        gc.clearRect(0, 0, mazePanel.getWidth(), mazePanel.getHeight());
         gc.setFill(Color.BLACK);
         mazePane.getChildren().clear();
         
-        
-        
+        mazePanel = getNewCanvas(CANVAS_HEIGHT, CANVAS_WIDTH);
+        zoomPane = new ZoomableScrollPane(mazePanel);
+        mazePane.getChildren().add(zoomPane);
+
         gc = mazePanel.getGraphicsContext2D();
         gc.setFill(Color.RED);
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(3);
-        mazePane.getChildren().add(mazePanel);
+        
+    }
+    
+    // rendering the maze:
+    public void render() {
+        
+        clearCanvas();
 
         keySolution = new ArrayList<Coordinate>();
         exitSolution = new ArrayList<Coordinate>();
         
         int currentX = 0;
         int currentY = 0;
-
         for (Iterator<MazeRow> iterator = maze.getMazeRows().descendingIterator(); iterator.hasNext();) {
             MazeRow currentRow = (MazeRow) iterator.next();
 
@@ -200,6 +233,7 @@ public class CombobulatorController implements Initializable {
                 Coordinate screenLocation = new Coordinate(currentX + Maze.OFFSET, currentY + Maze.OFFSET);
                 currentRoom.setScreenLocation(screenLocation);
                 currentRoom.render(gc);
+                
                 currentX += Maze.ROOM_WIDTH;
             }
 
@@ -223,11 +257,9 @@ public class CombobulatorController implements Initializable {
         
         Coordinate startLocation = maze.getEntrance();
         Coordinate keyLocation = maze.getKey();
-        //foundExit = traverse(start);
 
         boolean gotKey = findGoal(startLocation, "KEY", foundKey);
         if (gotKey) {
-
             // reset each room to be not visited - again
             maze.getRoomMap().forEach((k, v) -> v.setVisited(false));
             boolean exited = findGoal(keyLocation, "EXIT", foundExit);
@@ -281,24 +313,25 @@ public class CombobulatorController implements Initializable {
         
         // get the neighbors of the current room
         Map<String, Coordinate> neighbors = room.getNeighbors();
+        
 
         // iterate through the neighbors, and check for the goal in each one
-        // is this depth first or breadth first? 
-        // I think it's depth first since I recurse into each neighbor
-        for (Map.Entry<String, Coordinate> entry : neighbors.entrySet()) {
-            String key = entry.getKey();
-            
-            MazeRoom nextRoom = maze.getRoomMap().get(entry.getValue());
+        for (Iterator<String> iterator = neighbors.keySet().iterator(); iterator.hasNext();) {
+            String key = iterator.next();
+            Coordinate nextLocation = neighbors.get(key);
+            MazeRoom nextRoom = maze.getRoomMap().get(nextLocation);
+     
             if (!nextRoom.isVisited()) {
                 //textArea.appendText("Checking " + MazeRoom.DIRECTIONS.get(key) + "\n");
-                goalFlag = findGoal(entry.getValue(), goalName,goalFlag);
+                goalFlag = findGoal(nextLocation,goalName,goalFlag);
             }
             if (goalFlag) {
-                return true;
+                break;
             }
         }
-        return false;
+        return goalFlag;
     }
+        
     
     // try to animate a shape 
     // along the keySolution path 
@@ -311,8 +344,8 @@ public class CombobulatorController implements Initializable {
         Path exitPath = view.createPath(exitSolution);
         
         
-        Animation keyAnimation = view.createPathAnimation(keyPath, Duration.seconds(4),"KEY");
-        Animation exitAnimation = view.createPathAnimation(exitPath, Duration.seconds(4),"EXIT");
+        Animation keyAnimation = view.createPathAnimation(keyPath, Duration.seconds(animDuration),"KEY");
+        Animation exitAnimation = view.createPathAnimation(exitPath, Duration.seconds(animDuration),"EXIT");
         
         Animation startMarker = view.addMarker(maze.getEntrance(), Color.BLACK, Color.CORNFLOWERBLUE);
         Animation keyMarker = view.addMarker(maze.getKey(), Color.CORNFLOWERBLUE, Color.LIGHTGREEN);
@@ -332,7 +365,7 @@ public class CombobulatorController implements Initializable {
 
     private void renderMazeGraph() {
         // clear the graphics area 
-        gc.clearRect(0, 0, 856.0, 579.0);
+        gc.clearRect(0, 0, mazePanel.getHeight(), mazePanel.getWidth());
         gc.setFill(Color.BLACK);
         mazePane.getChildren().clear();
  
@@ -342,11 +375,9 @@ public class CombobulatorController implements Initializable {
         
         Layout layout = new MazeLayout(graph);
         layout.execute();
-        
- 
+
         mazePane.getChildren().add(graph.getScrollPane());
         
-        // iterate through all 
     }
   
     

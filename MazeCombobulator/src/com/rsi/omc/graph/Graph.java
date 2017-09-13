@@ -1,6 +1,7 @@
 
 package com.rsi.omc.graph;
 
+import com.rsi.omc.ui.ZoomableScrollPane;
 import com.rsi.omc.graph.Cell.CellType;
 import com.rsi.omc.graph.cells.LabelCell;
 import com.rsi.omc.graph.cells.RectangleCell;

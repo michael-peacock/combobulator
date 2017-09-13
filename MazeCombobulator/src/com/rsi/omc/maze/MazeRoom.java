@@ -2,7 +2,10 @@ package com.rsi.omc.maze;
 
 import java.awt.Graphics2D;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
+import java.util.Stack;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -21,7 +24,9 @@ public class MazeRoom {
 	private Coordinate location;
 	private Coordinate screenLocation;
 	
-        private Map<String, Coordinate> neighbors = new HashMap<>();
+        private Map<String, Coordinate> neighbors;
+        private Stack<Coordinate> neighborStack;
+        private Queue<Coordinate> neighborQueue;
 		
 	private static final String ONE = "1";
 	public static final Map<String,String> DIRECTIONS = new HashMap<>(); 
@@ -45,6 +50,10 @@ public class MazeRoom {
 	
 	public MazeRoom(String entry) {
 		
+            neighbors = new HashMap<>();
+            neighborStack = new Stack<>();
+            neighborQueue = new LinkedList<>();
+            
 		StringBuilder sb = new StringBuilder(entry);
 		// delete {
 		sb.deleteCharAt(0);
@@ -58,7 +67,7 @@ public class MazeRoom {
         public String getId() {
             StringBuilder sb = new StringBuilder();
             if (isSpecialRoom()) {
-                sb.append(getSpecialNotation() + "\n");
+                sb.append(getSpecialNotation()).append("\n");
             }
             sb.append("(");
             sb.append(getLocation().getRow());
@@ -170,18 +179,30 @@ public class MazeRoom {
     public void populateNeighbors() {
         
         if (!this.northWall && !getSpecialNotation().contains("N") ){
-            neighbors.put("N", new Coordinate(getLocation().getRow()-1, getLocation().getColumn()) );
+            Coordinate neighbor = new Coordinate(getLocation().getRow()-1, getLocation().getColumn());
+            neighbors.put("N",neighbor);
+            neighborQueue.add(neighbor);
+            neighborStack.push(neighbor);
         }
         if (!this.southWall && !getSpecialNotation().contains("S")) {
-            neighbors.put("S", new Coordinate(getLocation().getRow()+1, getLocation().getColumn()) );
+            Coordinate neighbor = new Coordinate(getLocation().getRow()+1, getLocation().getColumn());
+            neighbors.put("S",neighbor);
+            neighborQueue.add(neighbor);
+            neighborStack.push(neighbor);
         }
 
         if (!this.eastWall && !getSpecialNotation().contains("E")) {
-            neighbors.put("E", new Coordinate(getLocation().getRow(), getLocation().getColumn()+1) );
+            Coordinate neighbor = new Coordinate(getLocation().getRow(), getLocation().getColumn()+1);
+            neighbors.put("E", neighbor);
+            neighborQueue.add(neighbor);
+            neighborStack.push(neighbor);
         }
 
         if (!this.westWall && !getSpecialNotation().contains("W")) {
-            neighbors.put("W", new Coordinate(getLocation().getRow(), getLocation().getColumn()-1) );
+            Coordinate neighbor = new Coordinate(getLocation().getRow(), getLocation().getColumn()-1);
+            neighbors.put("W", neighbor);
+            neighborQueue.add(neighbor);
+            neighborStack.push(neighbor);
         }        
 
         
