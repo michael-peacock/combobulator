@@ -1,14 +1,26 @@
 package com.rsi.omc.maze;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Data;
 //
 
 @Data
 public class MazeSolution {
     
-    private int stepsToKey;
-    private int stepsToExit;
-    private String solutionMethod;
+    private int stepCount;
+    private String strategy;
+    protected List<Coordinate> keySolution;
+    protected List<Coordinate> exitSolution;
+    
+    public MazeSolution() {
+        keySolution = new ArrayList<Coordinate>();
+        exitSolution = new ArrayList<Coordinate>();    
+    }
+    public MazeSolution(String strategy) {
+        this();
+        this.strategy = strategy;
+    }
 
 
 //    @Override

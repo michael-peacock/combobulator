@@ -14,6 +14,10 @@ import com.rsi.omc.maze.Coordinate;
 import com.rsi.omc.maze.MazeRoom;
 import com.rsi.omc.maze.MazeRow;
 import com.rsi.omc.maze.Maze;
+import com.rsi.omc.maze.MazeSolution;
+import com.rsi.omc.search.BreadthFirstSearch;
+import com.rsi.omc.search.MazeSearchStrategy;
+import com.rsi.omc.search.RandomWalkSearch;
 import com.rsi.omc.ui.ResizableCanvas;
 
 import java.awt.Desktop;
@@ -22,19 +26,21 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
 import javafx.animation.Animation;
 import javafx.animation.SequentialTransition;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -45,11 +51,13 @@ import javafx.scene.shape.Path;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import lombok.Data;
 
 /**
  *
  * @author michael.peacock
  */
+@Data
 public class CombobulatorController implements Initializable {
 
     private final Desktop desktop = Desktop.getDesktop();
@@ -87,6 +95,7 @@ public class CombobulatorController implements Initializable {
     @FXML Button quitButton;
     @FXML Button graphButton;
     @FXML TextField animationDuration;
+    @FXML ChoiceBox<String> searchStrategy;
 
     @FXML TextArea textArea;
     ResizableCanvas mazePanel;
@@ -141,7 +150,6 @@ public class CombobulatorController implements Initializable {
         
     }
     
-    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         mazePanel = getNewCanvas(CANVAS_HEIGHT, CANVAS_WIDTH);
@@ -153,18 +161,13 @@ public class CombobulatorController implements Initializable {
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(3);
         
-        animationDuration.focusedProperty().addListener(new ChangeListener<Boolean>()
-        {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> arg0, Boolean oldPropertyValue, Boolean newPropertyValue)
-            {
-                if (newPropertyValue)
-                {
-                    animDuration = Double.parseDouble(animationDuration.getText());
-                    textArea.appendText("Animation Duration Changed to " + animDuration + " seconds\n");
-                }
-            }
-        });
+        List<String> strategies = new ArrayList<>();
+        strategies.add("Random");
+        strategies.add("Breadth First");
+        strategies.add("Depth First");
+        
+        ObservableList<String> list = FXCollections.observableArrayList(strategies);
+        searchStrategy.setItems(list);
         
     }
 
@@ -250,98 +253,24 @@ public class CombobulatorController implements Initializable {
     //      and find the exit
     public void solve() {
         
-        stepCount = 0;
-        
-        // reset each room to be not visited
-        maze.getRoomMap().forEach((k, v) -> v.setVisited(false));
-        
-        Coordinate startLocation = maze.getEntrance();
-        Coordinate keyLocation = maze.getKey();
+        animDuration = Double.parseDouble(animationDuration.getText());
+        MazeSearchStrategy mazeSearch = createMazeSearchStrategy();
+        MazeSolution solution = mazeSearch.solve();
 
-        boolean gotKey = findGoal(startLocation, "KEY", foundKey);
-        if (gotKey) {
-            // reset each room to be not visited - again
-            maze.getRoomMap().forEach((k, v) -> v.setVisited(false));
-            boolean exited = findGoal(keyLocation, "EXIT", foundExit);
-        } 
-        else {
-            textArea.appendText("I got Discombobulated! Never found the key!\n");  
-        }
-        
         // try to animate the keySolution
-        showSolution();
+        showSolution(solution);
     }
 
-    /**
-     * Method to find the current goal
-     * There are two goal types - Key and Exit
-     * @param currentLocation
-     * @param goalName
-     * @param goalFlag
-     * @return 
-     */
-    private boolean findGoal(Coordinate currentLocation, String goalName, boolean goalFlag) {
-
-        stepCount++;
-        
-        MazeRoom room = maze.getRoomMap().get(currentLocation);
-        gc.setFill(Color.RED);
-        gc.setStroke(Color.BLACK);
-        
-        //textArea.appendText("Current Cell: (Row,Col): (" + currentLocation.getRow() + ","+  currentLocation.getColumn() +")\n");  
-
-        if (room.isVisited()) {
-            return false;
-        }
-
-        room.setVisited(true);
-
-        if ("KEY".equals(goalName)) {
-            keySolution.add(room.getScreenLocation());
-            if (!goalFlag && room.hasKey()) {
-                textArea.appendText("Found Key on Step: " + stepCount + "\n");
-                return true;
-            }
-        }
-        else if ("EXIT".equals(goalName)) {
-            exitSolution.add(room.getScreenLocation());
-            if (!goalFlag && room.hasExit()) {
-                textArea.appendText("Found Exit on Step: " + stepCount + "\n");
-                return true;
-            }
-        }
-        
-        // get the neighbors of the current room
-        Map<String, Coordinate> neighbors = room.getNeighbors();
-        
-
-        // iterate through the neighbors, and check for the goal in each one
-        for (Iterator<String> iterator = neighbors.keySet().iterator(); iterator.hasNext();) {
-            String key = iterator.next();
-            Coordinate nextLocation = neighbors.get(key);
-            MazeRoom nextRoom = maze.getRoomMap().get(nextLocation);
-     
-            if (!nextRoom.isVisited()) {
-                //textArea.appendText("Checking " + MazeRoom.DIRECTIONS.get(key) + "\n");
-                goalFlag = findGoal(nextLocation,goalName,goalFlag);
-            }
-            if (goalFlag) {
-                break;
-            }
-        }
-        return goalFlag;
-    }
-        
     
     // try to animate a shape 
     // along the keySolution path 
-    private void showSolution() {
+    private void showSolution(MazeSolution solution) {
 
         SolutionView view = new SolutionView();
         view.setGc(gc);
         
-        Path keyPath = view.createPath(keySolution);
-        Path exitPath = view.createPath(exitSolution);
+        Path keyPath = view.createPath(solution.getKeySolution());
+        Path exitPath = view.createPath(solution.getExitSolution());
         
         
         Animation keyAnimation = view.createPathAnimation(keyPath, Duration.seconds(animDuration),"KEY");
@@ -377,6 +306,22 @@ public class CombobulatorController implements Initializable {
         layout.execute();
 
         mazePane.getChildren().add(graph.getScrollPane());
+        
+    }
+
+    private MazeSearchStrategy createMazeSearchStrategy() {
+        String strategy = searchStrategy.getValue();
+        MazeSearchStrategy returnStrategy = null;
+        
+        if ("RANDOM".equalsIgnoreCase(strategy)) {
+            returnStrategy = new RandomWalkSearch(this);
+        }
+        
+        if ("BREADTH FIRST".equalsIgnoreCase(strategy)) {
+            returnStrategy = new BreadthFirstSearch(this);
+        }
+        
+        return returnStrategy;
         
     }
   
