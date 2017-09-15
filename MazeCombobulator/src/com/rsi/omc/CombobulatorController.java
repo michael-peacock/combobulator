@@ -16,6 +16,7 @@ import com.rsi.omc.maze.MazeRow;
 import com.rsi.omc.maze.Maze;
 import com.rsi.omc.maze.MazeSolution;
 import com.rsi.omc.search.BreadthFirstSearch;
+import com.rsi.omc.search.DepthFirstSearch;
 import com.rsi.omc.search.MazeSearchStrategy;
 import com.rsi.omc.search.RandomWalkSearch;
 import com.rsi.omc.ui.ResizableCanvas;
@@ -321,6 +322,9 @@ public class CombobulatorController implements Initializable {
             returnStrategy = new BreadthFirstSearch(this);
         }
         
+        if ("DEPTH FIRST".equalsIgnoreCase(strategy)) {
+            returnStrategy = new DepthFirstSearch(this);
+        }        
         return returnStrategy;
         
     }
