@@ -11,15 +11,13 @@ import com.rsi.omc.maze.MazeRoom;
 import java.util.Iterator;
 import java.util.Map;
 
-
-/**
- *
- * @author michael.peacock
- */
 public class RandomWalkSearch extends MazeSearchStrategy {
 
     public RandomWalkSearch(CombobulatorController controller) {
         super(controller);
+        solution.setStrategy("Peacock's Memory - probably a depth first variation");
+        controller.getTextArea().appendText("Solving with Strategy : " + solution.getStrategy()+ "\n");
+        
     }
 
     @Override

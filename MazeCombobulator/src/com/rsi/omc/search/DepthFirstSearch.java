@@ -16,6 +16,8 @@ public class DepthFirstSearch extends MazeSearchStrategy {
 
     public DepthFirstSearch(CombobulatorController controller) {
         super(controller);
+        solution.setStrategy("Depth First");
+        controller.getTextArea().appendText("Solving with Strategy : " + solution.getStrategy()+ "\n");
     }
 
     @Override
@@ -28,7 +30,7 @@ public class DepthFirstSearch extends MazeSearchStrategy {
      * @return
      */
     protected boolean findGoal(Coordinate currentLocation, String goalName, boolean goalFlag) {
-        solution.setStrategy("Depth First");
+        
 
         MazeRoom room = maze.getRoomMap().get(currentLocation);
 

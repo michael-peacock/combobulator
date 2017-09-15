@@ -15,6 +15,8 @@ public class BreadthFirstSearch extends MazeSearchStrategy {
 
     public BreadthFirstSearch(CombobulatorController controller) {
         super(controller);
+        solution.setStrategy("Breadth First");
+        controller.getTextArea().appendText("Solving with Strategy : " + solution.getStrategy()+ "\n");
     }
 
     @Override
@@ -27,8 +29,7 @@ public class BreadthFirstSearch extends MazeSearchStrategy {
      * @return
      */
     protected boolean findGoal(Coordinate currentLocation, String goalName, boolean goalFlag) {
-        solution.setStrategy("Breadth First");
-
+        
         MazeRoom room = maze.getRoomMap().get(currentLocation);
 
         // Create a queue for BFS

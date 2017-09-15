@@ -163,7 +163,7 @@ public class CombobulatorController implements Initializable {
         gc.setLineWidth(3);
         
         List<String> strategies = new ArrayList<>();
-        strategies.add("Random");
+        strategies.add("Top Of My Head");
         strategies.add("Breadth First");
         strategies.add("Depth First");
         
@@ -195,10 +195,7 @@ public class CombobulatorController implements Initializable {
         this.maze = mazeLoader.getMaze();
         
         mazePanel = getNewCanvas(CANVAS_HEIGHT, CANVAS_WIDTH);
- 
-        
         zoomPane = new ZoomableScrollPane(mazePanel);
-        
         mazePane.getChildren().add(zoomPane);
         
     }
@@ -246,12 +243,6 @@ public class CombobulatorController implements Initializable {
         }
     }
 
-    // Solve the maze
-    // Here, set step count to 0
-    // start at the start location and find the key
-    // if the key is found, 
-    //      then restart at the key location
-    //      and find the exit
     public void solve() {
         
         animDuration = Double.parseDouble(animationDuration.getText());
@@ -314,7 +305,7 @@ public class CombobulatorController implements Initializable {
         String strategy = searchStrategy.getValue();
         MazeSearchStrategy returnStrategy = null;
         
-        if ("RANDOM".equalsIgnoreCase(strategy)) {
+        if ("TOP OF MY HEAD".equalsIgnoreCase(strategy)) {
             returnStrategy = new RandomWalkSearch(this);
         }
         
