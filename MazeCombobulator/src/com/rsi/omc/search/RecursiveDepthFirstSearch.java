@@ -11,11 +11,11 @@ import com.rsi.omc.maze.MazeRoom;
 import java.util.Iterator;
 import java.util.Map;
 
-public class RandomWalkSearch extends MazeSearchStrategy {
+public class RecursiveDepthFirstSearch extends MazeSearchStrategy {
 
-    public RandomWalkSearch(CombobulatorController controller) {
+    public RecursiveDepthFirstSearch(CombobulatorController controller) {
         super(controller);
-        solution.setStrategy("Peacock's Memory - probably a depth first variation");
+        solution.setStrategy("Recursive Depth First");
         controller.getTextArea().appendText("Solving with Strategy : " + solution.getStrategy()+ "\n");
         
     }
@@ -40,12 +40,10 @@ public class RandomWalkSearch extends MazeSearchStrategy {
         }
 
         room.setVisited(true);
-        
         if ("KEY".equals(goalName)) {
             solution.getKeySolution().add(room.getScreenLocation());
             if (!goalFlag && room.hasKey()) {
                 controller.getTextArea().appendText("Found Key on Step: " + solution.getStepCount() + "\n");
-                
                 return true;
             }
         }
@@ -59,7 +57,6 @@ public class RandomWalkSearch extends MazeSearchStrategy {
         
         // get the neighbors of the current room
         Map<String, Coordinate> neighbors = room.getNeighbors();
-        
 
         // iterate through the neighbors, and check for the goal in each one
         for (Iterator<String> iterator = neighbors.keySet().iterator(); iterator.hasNext();) {

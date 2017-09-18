@@ -5,7 +5,7 @@
  */
 package com.rsi.omc;
 
-import com.rsi.omc.graph.Graph;
+import  com.rsi.omc.graph.Graph;
 import com.rsi.omc.graph.Layout;
 import com.rsi.omc.graph.MazeLayout;
 import com.rsi.omc.ui.ZoomableScrollPane;
@@ -18,10 +18,9 @@ import com.rsi.omc.maze.MazeSolution;
 import com.rsi.omc.search.BreadthFirstSearch;
 import com.rsi.omc.search.DepthFirstSearch;
 import com.rsi.omc.search.MazeSearchStrategy;
-import com.rsi.omc.search.RandomWalkSearch;
+import com.rsi.omc.search.RecursiveDepthFirstSearch;
 import com.rsi.omc.ui.ResizableCanvas;
 
-import java.awt.Desktop;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -31,8 +30,6 @@ import java.util.ResourceBundle;
 import javafx.animation.Animation;
 import javafx.animation.SequentialTransition;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -54,14 +51,9 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import lombok.Data;
 
-/**
- *
- * @author michael.peacock
- */
 @Data
 public class CombobulatorController implements Initializable {
 
-    private final Desktop desktop = Desktop.getDesktop();
     private Stage stage;
     private Maze maze;
     private MazeLoader mazeLoader;
@@ -78,7 +70,7 @@ public class CombobulatorController implements Initializable {
     public static final int SOLVE = 2;
 
     public static final double CIRCLE_RADIUS = 5;
-    
+
     private GraphicsContext gc;
 
     // list to hold keySolution screen coordinates
@@ -97,7 +89,6 @@ public class CombobulatorController implements Initializable {
     @FXML Button graphButton;
     @FXML TextField animationDuration;
     @FXML ChoiceBox<String> searchStrategy;
-
     @FXML TextArea textArea;
     ResizableCanvas mazePanel;
     ZoomableScrollPane zoomPane;
@@ -106,7 +97,7 @@ public class CombobulatorController implements Initializable {
     public static final Paint KEY_COLOR = Color.DARKRED;
     private double animDuration = 10.0;
 
-    @FXML
+    @FXML 
     private void handleOpenAction(ActionEvent event) {
         FileChooser chooser = new FileChooser();
         stage = (Stage) root.getScene().getWindow();
@@ -138,49 +129,50 @@ public class CombobulatorController implements Initializable {
     private void handleQuitAction(ActionEvent event) {
         Platform.exit();
     }
-    
+
     @FXML
     private void handleMazeGraphAction(ActionEvent event) {
         textArea.appendText("Rendering Maze Graph ...\n");
         renderMazeGraph();
     }
+
     @FXML
     private void handleMazeDurationTextChange(ActionEvent event) {
         this.animDuration = Double.parseDouble(animationDuration.getText());
         textArea.appendText("Animation Duration Changed to " + animDuration + " seconds\n");
-        
     }
-    
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         mazePanel = getNewCanvas(CANVAS_HEIGHT, CANVAS_WIDTH);
         zoomPane = new ZoomableScrollPane(mazePanel);
         mazePane.getChildren().add(zoomPane);
-        
+
         gc = mazePanel.getGraphicsContext2D();
         gc.setFill(Color.RED);
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(3);
-        
+
         List<String> strategies = new ArrayList<>();
-        strategies.add("Top Of My Head");
+        strategies.add("Recursive Depth First");
         strategies.add("Breadth First");
         strategies.add("Depth First");
-        
+
         ObservableList<String> list = FXCollections.observableArrayList(strategies);
         searchStrategy.setItems(list);
-        
+
     }
 
     private ResizableCanvas getNewCanvas(double height, double width) {
-       ResizableCanvas myPanel = new ResizableCanvas(width, height);
+        ResizableCanvas myPanel = new ResizableCanvas(width, height);
 
         myPanel.widthProperty().bind(
-                       mazePane.widthProperty());
+                mazePane.widthProperty());
         myPanel.heightProperty().bind(
-                       mazePane.heightProperty());
+                mazePane.heightProperty());
         return myPanel;
     }
+
     private void readFile(File mazeFile) {
 
         mazeLoader = new MazeLoader();
@@ -193,19 +185,18 @@ public class CombobulatorController implements Initializable {
         textArea.appendText("   Exit Location : " + mazeLoader.getMaze().getExit() + "\n");
         textArea.appendText("   Key Location : " + mazeLoader.getMaze().getKey() + "\n");
         this.maze = mazeLoader.getMaze();
-        
+
         mazePanel = getNewCanvas(CANVAS_HEIGHT, CANVAS_WIDTH);
         zoomPane = new ZoomableScrollPane(mazePanel);
         mazePane.getChildren().add(zoomPane);
-        
-    }
 
+    }
 
     public void clearCanvas() {
         gc.clearRect(0, 0, mazePanel.getWidth(), mazePanel.getHeight());
         gc.setFill(Color.BLACK);
         mazePane.getChildren().clear();
-        
+
         mazePanel = getNewCanvas(CANVAS_HEIGHT, CANVAS_WIDTH);
         zoomPane = new ZoomableScrollPane(mazePanel);
         mazePane.getChildren().add(zoomPane);
@@ -214,17 +205,17 @@ public class CombobulatorController implements Initializable {
         gc.setFill(Color.RED);
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(3);
-        
+
     }
-    
+
     // rendering the maze:
     public void render() {
-        
+
         clearCanvas();
 
         keySolution = new ArrayList<Coordinate>();
         exitSolution = new ArrayList<Coordinate>();
-        
+
         int currentX = 0;
         int currentY = 0;
         for (Iterator<MazeRow> iterator = maze.getMazeRows().descendingIterator(); iterator.hasNext();) {
@@ -234,7 +225,7 @@ public class CombobulatorController implements Initializable {
                 Coordinate screenLocation = new Coordinate(currentX + Maze.OFFSET, currentY + Maze.OFFSET);
                 currentRoom.setScreenLocation(screenLocation);
                 currentRoom.render(gc);
-                
+
                 currentX += Maze.ROOM_WIDTH;
             }
 
@@ -244,7 +235,7 @@ public class CombobulatorController implements Initializable {
     }
 
     public void solve() {
-        
+
         animDuration = Double.parseDouble(animationDuration.getText());
         MazeSearchStrategy mazeSearch = createMazeSearchStrategy();
         MazeSolution solution = mazeSearch.solve();
@@ -253,73 +244,67 @@ public class CombobulatorController implements Initializable {
         showSolution(solution);
     }
 
-    
     // try to animate a shape 
     // along the keySolution path 
     private void showSolution(MazeSolution solution) {
 
         SolutionView view = new SolutionView();
         view.setGc(gc);
-        
+
         Path keyPath = view.createPath(solution.getKeySolution());
         Path exitPath = view.createPath(solution.getExitSolution());
-        
-        
-        Animation keyAnimation = view.createPathAnimation(keyPath, Duration.seconds(animDuration),"KEY");
-        Animation exitAnimation = view.createPathAnimation(exitPath, Duration.seconds(animDuration),"EXIT");
-        
+
+        Animation keyAnimation = view.createPathAnimation(keyPath, Duration.seconds(animDuration), "KEY");
+        Animation exitAnimation = view.createPathAnimation(exitPath, Duration.seconds(animDuration), "EXIT");
+
         Animation startMarker = view.addMarker(maze.getEntrance(), Color.BLACK, Color.CORNFLOWERBLUE);
         Animation keyMarker = view.addMarker(maze.getKey(), Color.CORNFLOWERBLUE, Color.LIGHTGREEN);
         Animation exitMarker = view.addMarker(maze.getExit(), Color.LIGHTGREEN, Color.DARKBLUE);
-        
+
         gc.setLineWidth(4);
 
         SequentialTransition animationSeq = new SequentialTransition(
-                    startMarker, 
-                    keyAnimation,keyMarker,
-                    exitAnimation,exitMarker);
+                startMarker,
+                keyAnimation, keyMarker,
+                exitAnimation, exitMarker);
         animationSeq.setAutoReverse(true);
         animationSeq.play();
     }
-    
- 
 
     private void renderMazeGraph() {
         // clear the graphics area 
         gc.clearRect(0, 0, mazePanel.getHeight(), mazePanel.getWidth());
         gc.setFill(Color.BLACK);
         mazePane.getChildren().clear();
- 
+
         Graph graph = new Graph(mazeLoader.getMaze());
-        
+
         graph.addComponents();
-        
+
         Layout layout = new MazeLayout(graph);
         layout.execute();
 
         mazePane.getChildren().add(graph.getScrollPane());
-        
+
     }
 
     private MazeSearchStrategy createMazeSearchStrategy() {
         String strategy = searchStrategy.getValue();
         MazeSearchStrategy returnStrategy = null;
-        
-        if ("TOP OF MY HEAD".equalsIgnoreCase(strategy)) {
-            returnStrategy = new RandomWalkSearch(this);
+
+        if ("RECURSIVE DEPTH FIRST".equalsIgnoreCase(strategy)) {
+            returnStrategy = new RecursiveDepthFirstSearch(this);
         }
-        
+
         if ("BREADTH FIRST".equalsIgnoreCase(strategy)) {
             returnStrategy = new BreadthFirstSearch(this);
         }
-        
+
         if ("DEPTH FIRST".equalsIgnoreCase(strategy)) {
             returnStrategy = new DepthFirstSearch(this);
-        }        
+        }
         return returnStrategy;
-        
+
     }
-  
-    
-    
+
 }
